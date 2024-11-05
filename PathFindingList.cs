@@ -73,5 +73,11 @@ namespace World {
 			list.Remove(nodeRecord);
 			return list;
 		}
+
+		// Returns the number of elements in the list
+		public int Count()
+		{
+			return queue.Count;
+		}
 	}
 }

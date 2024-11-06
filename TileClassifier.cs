@@ -243,5 +243,6 @@ public class TileClassifier : MonoBehaviour
                 group.toNode = new Vector2(corners[3].x, corners[3].y); // Bottom right
             }
         }
+        PathFinder.instance.graphLevels = levels;
     }
 }

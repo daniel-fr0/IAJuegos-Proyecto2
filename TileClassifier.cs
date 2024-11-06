@@ -16,9 +16,11 @@ public class TileClassifier : MonoBehaviour
     public GraphLevel[] levels;
     public int gizmosLevels = 0;
     public bool debugInfo = false;
-    private InputSystem_Actions controls;
 
-    #region Gizmos and Debug + Input System
+    #region Gizmos and Debug + Input System + Singleton Initialization
+    private InputSystem_Actions controls;
+    public static TileClassifier instance;
+
     void Awake()
     {
         controls = new InputSystem_Actions();
@@ -29,6 +31,16 @@ public class TileClassifier : MonoBehaviour
         // Increase/decrease the number of levels shown
         controls.Player.Previous.performed += ctx => gizmosLevels = (int)Mathf.Repeat(gizmosLevels-1, levels.Length+1);
         controls.Player.Next.performed += ctx => gizmosLevels = (int)Mathf.Repeat(gizmosLevels+1, levels.Length+1);
+
+        if (instance == null)
+        {
+            instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
+        else if (instance != this)
+        {
+            Destroy(gameObject);
+        }
     }
 
     void OnEnable()
@@ -202,7 +214,7 @@ public class TileClassifier : MonoBehaviour
         }
     }
 
-    private bool IsWalkableTile(Vector3 position) 
+    public bool IsWalkableTile(Vector3 position) 
     {
         Vector3Int cellPosition = tilemap.WorldToCell(position);
         TileBase tile = tilemap.GetTile(cellPosition);

@@ -79,6 +79,11 @@ public class Graph
 
 		connections[fromNode].Add(connection);
 	}
+
+	public Node[] GetNodes()
+	{
+		return new List<Node>(connections.Keys).ToArray();
+	}
 }
 
 public class NodeRecord : IComparer<NodeRecord>, IComparable<NodeRecord>
@@ -105,4 +110,17 @@ public class NodeRecord : IComparer<NodeRecord>, IComparable<NodeRecord>
 	{
 		return costSoFar.CompareTo(other.costSoFar);
 	}
+}
+
+[Serializable]
+public class NodeGroup
+{
+	public Vector2 fromNode;
+	public Vector2 toNode;
+}
+
+[Serializable]
+public class GraphLevel
+{
+	public NodeGroup[] groups;
 }

@@ -50,12 +50,20 @@ public class PathFindingList
 	// Adds the given NodeRecord structure to the list
 	public void Add(NodeRecord nodeRecord)
 	{
+		if (queue.Contains(nodeRecord))
+		{
+			return;
+		}
 		queue.Enqueue(nodeRecord, nodeRecord.estimatedTotalCost);
 	}
 
 	// Removes the given NodeRecord structure from the list
 	public void Remove(NodeRecord nodeRecord)
 	{
+		if (!queue.Contains(nodeRecord))
+		{
+			return;
+		}
 		queue.Remove(nodeRecord);
 	}
 

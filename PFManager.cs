@@ -13,17 +13,16 @@ public class PathFinderManager : MonoBehaviour
 		if (instance == null)
 		{
 			instance = this;
+			DontDestroyOnLoad(gameObject);
 		}
 		else if (instance != this)
 		{
 			Destroy(gameObject);
 		}
-
-		DontDestroyOnLoad(gameObject);
 	}
 	#endregion
 
-	public Connection[] pathFindAStar(Vector3 startPos, Vector3 endPos)
+	public Connection[] PathFindAStar(Vector3 startPos, Vector3 endPos)
 	{
 		Node start = new Node(startPos);
 		Node end = new Node(endPos);
@@ -107,7 +106,6 @@ public class PathFinderManager : MonoBehaviour
 				endNodeRecord.costSoFar = endNodeCost;
 				endNodeRecord.connection = connection;
 				endNodeRecord.estimatedTotalCost = endNodeCost + endNodeHeuristic;
-				endNode.nodeRecord = endNodeRecord;
 
 				// And add it to the open list
 				if (!open.Contains(endNode))
@@ -131,10 +129,10 @@ public class PathFinderManager : MonoBehaviour
 		List<Connection> path = new List<Connection>();
 
 		// Work back along the path, accumulating connections
-		while (current.node != start)
+		while (!current.node.Equals(start))
 		{
 			path.Add(current.connection);
-			current = current.connection.fromNode.nodeRecord;
+			current = closed.Find(current.connection.fromNode);
 		}
 		
 		// Reverse the path, and return it

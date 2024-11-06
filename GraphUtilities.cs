@@ -6,7 +6,6 @@ public class Node
 {
 	public int row;
 	public int column;
-	public NodeRecord nodeRecord;
 
 	public Node(Vector3 position)
 	{

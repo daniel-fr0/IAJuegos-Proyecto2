@@ -179,7 +179,7 @@ public class TileClassifier : MonoBehaviour
     private void GenerateTileGraph() 
     {
         tileGraph = new Graph();
-        PathFinder.instance.tileGraph = tileGraph;
+        PathFinderManager.instance.graph = tileGraph;
 
         foreach (Vector3 position in tilemap.cellBounds.allPositionsWithin) 
         {
@@ -243,6 +243,6 @@ public class TileClassifier : MonoBehaviour
                 group.toNode = new Vector2(corners[3].x, corners[3].y); // Bottom right
             }
         }
-        PathFinder.instance.graphLevels = levels;
+        PathFinderManager.instance.graphLevels = levels;
     }
 }

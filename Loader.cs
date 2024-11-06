@@ -2,13 +2,13 @@ using UnityEngine;
 
 public class Loader : MonoBehaviour
 {
-    public GameObject pathFinderPrefab;
+    public GameObject PathFinderManagerPrefab;
 
     void Awake()
     {
-        if (PathFinder.instance == null)
+        if (PathFinderManager.instance == null)
         {
-            Instantiate(pathFinderPrefab);
+            Instantiate(PathFinderManagerPrefab);
         }
     }
 }

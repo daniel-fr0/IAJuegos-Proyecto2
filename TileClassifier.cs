@@ -268,7 +268,7 @@ public class TileClassifier : MonoBehaviour
                     Node fromNode = nodes[i];
                     Node toNode = nodes[j];
 
-                    // If the nodes have a connection from the lower level, add it
+                    // Iterate at the lower level to find the connection
                     bool hasConnection = false;
                     foreach (Node lowerNode in hierarchicalGraph.levels[level-1].GetNodes())
                     {
@@ -278,7 +278,6 @@ public class TileClassifier : MonoBehaviour
                                 fromNode.Contains(connection.toNode.GetPosition()) && toNode.Contains(connection.fromNode.GetPosition()))
                             {
                                 hierarchicalGraph.AddConnection(level, fromNode, toNode);
-                                hierarchicalGraph.AddConnection(level, toNode, fromNode);
                                 hasConnection = true;
                                 break;
                             }

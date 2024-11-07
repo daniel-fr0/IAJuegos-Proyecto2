@@ -60,6 +60,7 @@ public class HierarchicalGraph
 		if (level == 0)
 		{
 			levels[level].AddConnection(fromNode, toNode);
+			levels[level].AddConnection(toNode, fromNode);
 			return;
 		}
 
@@ -100,5 +101,6 @@ public class HierarchicalGraph
 
 		// Add the connection to the level
 		levels[level].AddConnection(fromNode, toNode, cost);
+		levels[level].AddConnection(toNode, fromNode, cost);
 	}
 }

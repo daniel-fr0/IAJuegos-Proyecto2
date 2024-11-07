@@ -49,7 +49,7 @@ public class PathFinder : MonoBehaviour
 		if (!TileClassifier.instance.IsWalkableTile(goalPosition)) return;
 		if (!TileClassifier.instance.IsWalkableTile(transform.position)) return;
 	
-		connections = pfm.PathFindAStar(transform.position, goalPosition);
+		connections = pfm.HierarchicalPathFindAStar(transform.position, goalPosition);
 
 		if (connections == null || connections.Length == 0) return;
 

@@ -1,9 +1,10 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class PathFinderManager : MonoBehaviour
 {
-	public Graph graph;
+	public Graph tileGraph;
 	public HierarchicalGraph hierarchicalGraph;
 
 	#region Singleton Initialization
@@ -22,10 +23,8 @@ public class PathFinderManager : MonoBehaviour
 	}
 	#endregion
 
-	public Connection[] PathFindAStar(Vector3 startPos, Vector3 endPos)
+	public Connection[] PathFindAStar(Graph graph, Node start, Node end)
 	{
-		Node start = new Node(startPos);
-		Node end = new Node(endPos);
 		NodeRecord current = null;
 		Heuristic heuristic = new ManhattanHeuristic(end);
 
@@ -138,5 +137,59 @@ public class PathFinderManager : MonoBehaviour
 		// Reverse the path, and return it
 		path.Reverse();
 		return path.ToArray();
+	}
+
+	public Connection[] HierarchicalPathFindAStar(Vector3 startPos, Vector3 endPos)
+	{
+		// Go up the hierarchy until we find the level in which the start and end nodes are in the same node, then stay at the previous level
+		Node startNode = new Node(startPos);
+		Node endNode = new Node(endPos);
+
+		// If the start and end nodes are the same, return an empty path
+		if (startNode.Equals(endNode))
+		{
+			return new Connection[0];
+		}
+
+		Node parentStart = startNode;
+		Node parentEnd = endNode;
+		
+		int level = 0;
+		while (level+1 < hierarchicalGraph.Height() && !parentStart.Equals(parentEnd))
+		{
+			parentStart = hierarchicalGraph.GetNode(level+1, startNode);
+			parentEnd = hierarchicalGraph.GetNode(level+1, endNode);
+
+			if (parentStart == null && parentEnd == null || parentStart.Equals(parentEnd))
+			{
+				break;
+			}
+
+			startNode = parentStart;
+			endNode = parentEnd;
+			level++;
+		}
+
+		// Use A* at the level to find the path
+		Graph graph = hierarchicalGraph.levels[level];
+		Connection[] path = PathFindAStar(graph, startNode, endNode);
+
+		// If the path is null, return null
+		if (path == null)
+		{
+			return null;
+		}
+
+		if (level == 0)
+		{
+			return path;
+		}
+
+		// Repeat recursively with half the path
+		Connection[] halfRight = HierarchicalPathFindAStar(startPos, path[path.Length/2].fromNode.GetPosition());
+		Connection[] halfLeft = HierarchicalPathFindAStar(path[path.Length/2].toNode.GetPosition(), endPos);
+
+		// Return the combined path
+		return halfRight.Concat(halfLeft).ToArray();
 	}
 }

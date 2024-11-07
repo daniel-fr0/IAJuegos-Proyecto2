@@ -20,7 +20,7 @@ public class HierarchicalGraph
 	public Node GetNode(int level, Node node)
 	{
 		// Cannot get a node from a level that does not exist
-		if (node.level >= levels.Count || level >= levels.Count || level < 0 || node.level < 0 || node == null)
+		if (node == null || level >= levels.Count || level < 0 || node.level >= levels.Count || node.level < 0)
 		{
 			return null;
 		}

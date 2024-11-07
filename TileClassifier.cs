@@ -197,7 +197,7 @@ public class TileClassifier : MonoBehaviour
     void Start()
     {
         // Generate the tile graph
-        PathFinderManager.instance.graph = GenerateTileGraph();
+        PathFinderManager.instance.tileGraph = GenerateTileGraph();
 
         // Generate the hierarchical graph based on the children GameObjects
         PathFinderManager.instance.hierarchicalGraph = GenerateHierarchicalGraph();

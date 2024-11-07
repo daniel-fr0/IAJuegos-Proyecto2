@@ -59,6 +59,9 @@ public class TileClassifier : MonoBehaviour
     #endregion
 
     #region Gizmos + Debug
+    public bool drawBoundingBoxes = true;
+    public bool drawConnections = true;
+    public bool DrawSpheres = true;
     private Color[] colors = { Color.green, Color.red, Color.cyan, Color.magenta, Color.yellow, Color.blue, Color.white, Color.black };
     public void OnDrawGizmos()
     {
@@ -91,15 +94,14 @@ public class TileClassifier : MonoBehaviour
                 // At level 0 just draw the connections and sphere
                 if (level == 0)
                 {
-                    Gizmos.DrawSphere(node.GetPosition(), 0.1f);
+                    if (DrawSpheres)  Gizmos.DrawSphere(node.GetPosition(), 0.1f);
+                    
                     foreach (Connection connection in graph.GetConnections(node))
                     {
                         Gizmos.DrawLine(node.GetPosition(), connection.toNode.GetPosition());
                     }
                     continue;
                 }
-
-                Gizmos.DrawSphere(node.GetPosition(), 0.1f);
                 
                 // Draw the bounding box of each node at upper levels
                 // Ensure that the bounds are in world space by adding the node's position
@@ -108,19 +110,29 @@ public class TileClassifier : MonoBehaviour
                 Vector3 topRight = new Vector3(node.bounds.xMax, node.bounds.yMax, 0) + node.GetPosition();
                 Vector3 bottomRight = new Vector3(node.bounds.xMax, node.bounds.yMin, 0) + node.GetPosition();
 
-                // Side lines
-                Gizmos.DrawLine(bottomLeft, topLeft);
-                Gizmos.DrawLine(topLeft, topRight);
-                Gizmos.DrawLine(topRight, bottomRight);
-                Gizmos.DrawLine(bottomRight, bottomLeft);
+                if (drawBoundingBoxes)
+                {
+                    // Side lines
+                    Gizmos.DrawLine(bottomLeft, topLeft);
+                    Gizmos.DrawLine(topLeft, topRight);
+                    Gizmos.DrawLine(topRight, bottomRight);
+                    Gizmos.DrawLine(bottomRight, bottomLeft);
 
-                // Vertices
-                Gizmos.DrawSphere(bottomLeft, 0.1f);
-                Gizmos.DrawSphere(topLeft, 0.1f);
-                Gizmos.DrawSphere(topRight, 0.1f);
-                Gizmos.DrawSphere(bottomRight, 0.1f);
+                    if (DrawSpheres)
+                    {
+                        // Center of the node
+                        Gizmos.DrawSphere(node.GetPosition(), 0.1f);
+
+                        // Vertices
+                        Gizmos.DrawSphere(bottomLeft, 0.1f);
+                        Gizmos.DrawSphere(topLeft, 0.1f);
+                        Gizmos.DrawSphere(topRight, 0.1f);
+                        Gizmos.DrawSphere(bottomRight, 0.1f);
+                    }
+                }
 
                 // Draw the connections between the nodes
+                if (!drawConnections) continue;
                 foreach (Connection connection in graph.GetConnections(node))
                 {
                     Gizmos.DrawLine(node.GetPosition(), connection.toNode.GetPosition());
@@ -155,20 +167,24 @@ public class TileClassifier : MonoBehaviour
                     continue;
                 }
                 
-                // Draw the bounding box of each node at upper levels
-                // Ensure that the bounds are in world space by adding the node's position
-                Vector3 bottomLeft = new Vector3(node.bounds.xMin, node.bounds.yMin, 0) + node.GetPosition();
-                Vector3 topLeft = new Vector3(node.bounds.xMin, node.bounds.yMax, 0) + node.GetPosition();
-                Vector3 topRight = new Vector3(node.bounds.xMax, node.bounds.yMax, 0) + node.GetPosition();
-                Vector3 bottomRight = new Vector3(node.bounds.xMax, node.bounds.yMin, 0) + node.GetPosition();
+                if (drawBoundingBoxes)
+                {
+                    // Draw the bounding box of each node at upper levels
+                    // Ensure that the bounds are in world space by adding the node's position
+                    Vector3 bottomLeft = new Vector3(node.bounds.xMin, node.bounds.yMin, 0) + node.GetPosition();
+                    Vector3 topLeft = new Vector3(node.bounds.xMin, node.bounds.yMax, 0) + node.GetPosition();
+                    Vector3 topRight = new Vector3(node.bounds.xMax, node.bounds.yMax, 0) + node.GetPosition();
+                    Vector3 bottomRight = new Vector3(node.bounds.xMax, node.bounds.yMin, 0) + node.GetPosition();
 
-                // Side lines
-                Debug.DrawLine(bottomLeft, topLeft, color);
-                Debug.DrawLine(topLeft, topRight, color);
-                Debug.DrawLine(topRight, bottomRight, color);
-                Debug.DrawLine(bottomRight, bottomLeft, color);
+                    // Side lines
+                    Debug.DrawLine(bottomLeft, topLeft, color);
+                    Debug.DrawLine(topLeft, topRight, color);
+                    Debug.DrawLine(topRight, bottomRight, color);
+                    Debug.DrawLine(bottomRight, bottomLeft, color);
+                }
 
                 // Draw the connections between the nodes
+                if (!drawConnections) continue;
                 foreach (Connection connection in graph.GetConnections(node))
                 {
                     Debug.DrawLine(node.GetPosition(), connection.toNode.GetPosition(), color);

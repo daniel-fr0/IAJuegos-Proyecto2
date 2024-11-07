@@ -4,7 +4,7 @@ using UnityEngine;
 public class PathFinderManager : MonoBehaviour
 {
 	public Graph graph;
-	public GraphLevel[] graphLevels;
+	public HierarchicalGraph hierarchicalGraph;
 
 	#region Singleton Initialization
 	public static PathFinderManager instance;
@@ -57,7 +57,7 @@ public class PathFinderManager : MonoBehaviour
 			{
 				// Get the cost estimate for the end node
 				Node endNode = connection.toNode;
-				float endNodeCost = current.costSoFar + connection.GetCost();
+				float endNodeCost = current.costSoFar + connection.cost;
 				float endNodeHeuristic;
 				NodeRecord endNodeRecord = null;
 

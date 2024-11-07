@@ -2,42 +2,61 @@ using UnityEngine;
 using System;
 using System.Collections.Generic;
 
+[Serializable]
 public class Node
 {
-	public int row;
-	public int column;
+	public int level;
+	public Rect bounds;
+	public Vector3 center;
+	public Node representativeChild;
+	public Node parent;
+
+	public Node(int level)
+	{
+		this.level = level;
+	}
 
 	public Node(Vector3 position)
 	{
-		// Get the row and column values from the position
-		// this will identify the node in the grid
-		row = Mathf.FloorToInt(position.x);
-		column = Mathf.FloorToInt(position.y);
+		// This is the constructor for the Node class for a level 0 node
+		level = 0;
+
+		// At level 0 is a tile node
+		// The position floor is used to get the integer position of the tile
+		// that corresponds to the bottom left corner of the tile
+		int x = Mathf.FloorToInt(position.x);
+		int y = Mathf.FloorToInt(position.y);
+
+		// The center is the center of the tile
+		center = new Vector3(x + 0.5f, y + 0.5f, 0);
 	}
 
 	public Vector3 GetPosition()
 	{
-		// Return the position in the center of the node
-		return new Vector3(row + 0.5f, column + 0.5f, 0.0f);
+		return center;
 	}
 
-	// Override Equals to compare two Node objects by their row and column values
-	public override bool Equals(object obj)
+	public bool Contains(Vector3 position)
 	{
+		return bounds.Contains(position);
+	}
+
+    public override bool Equals(object obj)
+    {
+        // Compare the level and position of the HierarchicalNode
 		Node node = obj as Node;
 		if (node == null)
 		{
 			return false;
 		}
 
-		return row == node.row && column == node.column;
-	}
+		return level == node.level && GetPosition() == node.GetPosition();
+    }
 
-	// Override GetHashCode to return a unique hash code for each Node object
 	public override int GetHashCode()
 	{
-		// Use the row and column values to generate a unique hash code
-		string hash = $"({row},{column})";
+		// Generate a unique hash code based on the level and position
+		string hash = $"({level},{center.x},{center.y})";
 		return hash.GetHashCode();
 	}
 }
@@ -46,16 +65,13 @@ public class Connection
 {
 	public Node fromNode;
 	public Node toNode;
+	public float cost;
 
-	public Connection(Node fromNode, Node toNode)
+	public Connection(Node fromNode, Node toNode, float cost)
 	{
 		this.fromNode = fromNode;
 		this.toNode = toNode;
-	}
-
-	public float GetCost()
-	{
-		return 1.0f;
+		this.cost = cost;
 	}
 }
 
@@ -63,14 +79,19 @@ public class Graph
 {
 	private Dictionary<Node, List<Connection>> connections = new Dictionary<Node, List<Connection>>();
 
+	public int Length
+	{
+		get { return connections.Count; }
+	}
+
 	public Connection[] GetConnections(Node fromNode)
 	{
 		return connections[fromNode].ToArray();
 	}
 
-	public void AddConnection(Node fromNode, Node toNode)
+	public void AddConnection(Node fromNode, Node toNode, float cost = 1.0f)
 	{
-		Connection connection = new Connection(fromNode, toNode);
+		Connection connection = new Connection(fromNode, toNode, cost);
 
 		if (!connections.ContainsKey(fromNode))
 		{
@@ -83,6 +104,29 @@ public class Graph
 	public Node[] GetNodes()
 	{
 		return new List<Node>(connections.Keys).ToArray();
+	}
+
+	public bool ContainsNode(Node node)
+	{
+		return connections.ContainsKey(node);
+	}
+
+	public bool ContainsConnection(Node fromNode, Node toNode)
+	{
+		if (!ContainsNode(fromNode))
+		{
+			return false;
+		}
+
+		foreach (Connection connection in connections[fromNode])
+		{
+			if (connection.toNode.Equals(toNode))
+			{
+				return true;
+			}
+		}
+
+		return false;
 	}
 }
 
@@ -110,17 +154,4 @@ public class NodeRecord : IComparer<NodeRecord>, IComparable<NodeRecord>
 	{
 		return costSoFar.CompareTo(other.costSoFar);
 	}
-}
-
-[Serializable]
-public class NodeGroup
-{
-	public Vector2 fromNode;
-	public Vector2 toNode;
-}
-
-[Serializable]
-public class GraphLevel
-{
-	public NodeGroup[] groups;
 }

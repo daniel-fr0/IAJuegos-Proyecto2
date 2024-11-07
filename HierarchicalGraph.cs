@@ -68,6 +68,12 @@ public class HierarchicalGraph
 		List<Node> fromChildren = new List<Node>();
 		List<Node> toChildren = new List<Node>();
 
+		// Find the representative children of the fromNode and toNode
+		Node fromRep = null;
+		Node toRep = null;
+		float fromDist = float.MaxValue;
+		float toDist = float.MaxValue;
+
 		// Find the children of the fromNode and toNode
 		foreach (Node lowerNode in levels[level-1].GetNodes())
 		{
@@ -76,14 +82,34 @@ public class HierarchicalGraph
 			{
 				lowerNode.parent = fromNode;
 				fromChildren.Add(lowerNode);
+
+				// Find the representative child of the fromNode
+				float dist = Vector3.Distance(fromNode.GetPosition(), lowerNode.GetPosition());
+				if (dist < fromDist)
+				{
+					fromRep = lowerNode;
+					fromDist = dist;
+				}
 			}
 			// If the lower node is contained in the toNode, set the parent
 			else if (toNode.Contains(lowerNode.GetPosition()))
 			{
 				lowerNode.parent = toNode;
 				toChildren.Add(lowerNode);
+
+				// Find the representative child of the toNode
+				float dist = Vector3.Distance(toNode.GetPosition(), lowerNode.GetPosition());
+				if (dist < toDist)
+				{
+					toRep = lowerNode;
+					toDist = dist;
+				}
 			}
 		}
+
+		// Add the representative children to the fromNode and toNode
+		fromNode.representativeChild = fromRep;
+		toNode.representativeChild = toRep;
 
 		// Calculate the cost of the connection as the average of costs of the children
 		float cost = 0;

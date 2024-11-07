@@ -2,23 +2,24 @@ using UnityEngine;
 using UnityEngine.Tilemaps;
 using System.Linq;
 using System;
+using System.Collections.Generic;
 
 public class TileClassifier : MonoBehaviour
 {
     public Tilemap tilemap;
 
     private Graph tileGraph;
+    public HierarchicalGraph hierarchicalGraph;
 
     // Walkable tile ids
 	public int[] walkableTiles = {0,1,8,9,11};
     
     // Levels for hierarchical graph
-    public GraphLevel[] levels;
     public int minGizmosLevels = 0;
     public int maxGizmosLevels = 0;
     public bool debugInfo = false;
 
-    #region Gizmos and Debug + Input System + Singleton Initialization
+    #region Input System + Singleton Initialization
     private InputSystem_Actions controls;
     public static TileClassifier instance;
 
@@ -33,8 +34,8 @@ public class TileClassifier : MonoBehaviour
         controls.DebugUI.DecreaseMinLevel.performed += ctx => minGizmosLevels = Mathf.Clamp(minGizmosLevels-1, 0, maxGizmosLevels);
         controls.DebugUI.IncreaseMinLevel.performed += ctx => minGizmosLevels = Mathf.Clamp(minGizmosLevels+1, 0, maxGizmosLevels);
 
-        controls.DebugUI.DecreaseMaxLevel.performed += ctx => maxGizmosLevels = Mathf.Clamp(maxGizmosLevels-1, minGizmosLevels, levels.Length);
-        controls.DebugUI.IncreaseMaxLevel.performed += ctx => maxGizmosLevels = Mathf.Clamp(maxGizmosLevels+1, minGizmosLevels, levels.Length);
+        controls.DebugUI.DecreaseMaxLevel.performed += ctx => maxGizmosLevels = Mathf.Clamp(maxGizmosLevels-1, minGizmosLevels, hierarchicalGraph.Height());
+        controls.DebugUI.IncreaseMaxLevel.performed += ctx => maxGizmosLevels = Mathf.Clamp(maxGizmosLevels+1, minGizmosLevels, hierarchicalGraph.Height());
 
         if (instance == null)
         {
@@ -55,7 +56,10 @@ public class TileClassifier : MonoBehaviour
     {
         controls.Disable();
     }
+    #endregion
 
+    #region Gizmos + Debug
+    private Color[] colors = { Color.green, Color.red, Color.cyan, Color.magenta, Color.yellow, Color.blue, Color.white, Color.black };
     public void OnDrawGizmos()
     {
         // If in game mode, don't draw path
@@ -64,118 +68,111 @@ public class TileClassifier : MonoBehaviour
             return;
         }
 
-        // Draw the upper levels
-        for (int level = 0; level < transform.childCount; level++)
+        GenerateTileGraph();
+        GenerateHierarchicalGraph();
+        DrawGizmos();
+    }
+
+    public void DrawGizmos()
+    {
+        // Draw each level
+        int level = -1;
+        foreach (Graph graph in hierarchicalGraph.levels)
         {
-            if (level+1 < minGizmosLevels)
+            level++;
+            if (level < minGizmosLevels || maxGizmosLevels < level)
             {
                 continue;
             }
-            if (level+1 > maxGizmosLevels)
+
+            foreach (Node node in graph.GetNodes())
             {
-                break;
-            }
-            // Color is based on the level, cycling through the rainbow
-            Gizmos.color = Color.HSVToRGB((float)level / transform.childCount, 1, 1);
+                Gizmos.color = colors[level % colors.Length];
+                // At level 0 just draw the connections and sphere
+                if (level == 0)
+                {
+                    Gizmos.DrawSphere(node.GetPosition(), 0.1f);
+                    foreach (Connection connection in graph.GetConnections(node))
+                    {
+                        Gizmos.DrawLine(node.GetPosition(), connection.toNode.GetPosition());
+                    }
+                    continue;
+                }
 
-            Transform levelTransform = transform.GetChild(level);
+                Gizmos.DrawSphere(node.GetPosition(), 0.1f);
+                
+                // Draw the bounding box of each node at upper levels
+                // Ensure that the bounds are in world space by adding the node's position
+                Vector3 bottomLeft = new Vector3(node.bounds.xMin, node.bounds.yMin, 0) + node.GetPosition();
+                Vector3 topLeft = new Vector3(node.bounds.xMin, node.bounds.yMax, 0) + node.GetPosition();
+                Vector3 topRight = new Vector3(node.bounds.xMax, node.bounds.yMax, 0) + node.GetPosition();
+                Vector3 bottomRight = new Vector3(node.bounds.xMax, node.bounds.yMin, 0) + node.GetPosition();
 
-            // Draw the groups of the current level
-            for (int i = 0; i < levelTransform.childCount; i++)
-            {
-                RectTransform groupTransform = levelTransform.GetChild(i).GetComponent<RectTransform>();
-
-                // Get the corners of the group
-                Vector3[] corners = new Vector3[4];
-                groupTransform.GetWorldCorners(corners);
-
-                Vector3 bottomLeft = corners[0];
-                Vector3 topLeft = corners[1];
-                Vector3 topRight = corners[2];
-                Vector3 bottomRight = corners[3];
-
-                // Draw the bounding box
+                // Side lines
                 Gizmos.DrawLine(bottomLeft, topLeft);
                 Gizmos.DrawLine(topLeft, topRight);
                 Gizmos.DrawLine(topRight, bottomRight);
                 Gizmos.DrawLine(bottomRight, bottomLeft);
 
-                // Add a sphere at the vertices
+                // Vertices
                 Gizmos.DrawSphere(bottomLeft, 0.1f);
                 Gizmos.DrawSphere(topLeft, 0.1f);
                 Gizmos.DrawSphere(topRight, 0.1f);
                 Gizmos.DrawSphere(bottomRight, 0.1f);
-            }
-        }
 
-        // Draw the walkable tiles
-        foreach (Vector3 position in tilemap.cellBounds.allPositionsWithin)
-        {
-            if (minGizmosLevels > 0 || maxGizmosLevels < 0) break;
-
-            if (IsWalkableTile(position))
-            {
-                Gizmos.color = Color.green;
-                Gizmos.DrawSphere(position+Vector3.one * 0.5f, 0.1f);
-
-                Vector3[] directions = { Vector3.up, Vector3.down, Vector3.left, Vector3.right };
-                foreach (Vector3 direction in directions)
+                // Draw the connections between the nodes
+                foreach (Connection connection in graph.GetConnections(node))
                 {
-                    Vector3 neighbourPosition = position + direction;
-                    if (IsWalkableTile(neighbourPosition))
-                    {
-                        Gizmos.color = Color.green;
-                        Gizmos.DrawLine(position+Vector3.one * 0.5f, neighbourPosition+Vector3.one * 0.5f);
-                    }
+                    Gizmos.DrawLine(node.GetPosition(), connection.toNode.GetPosition());
                 }
             }
         }
     }
 
-    public void DrawGroups()
+    public void DrawGraph()
     {
-        // Draw the upper levels
-        for (int level = 0; level < levels.Length; level++)
+        // Draw each level
+        int level = -1;
+        foreach (Graph graph in hierarchicalGraph.levels)
         {
-            if (level+1 < minGizmosLevels)
+            level++;
+            if (level < minGizmosLevels || maxGizmosLevels < level)
             {
                 continue;
             }
-            if (level+1 > maxGizmosLevels)
+
+            Color color = colors[level % colors.Length];
+            foreach (Node node in graph.GetNodes())
             {
-                break;
-            }
-            // Color is based on the level, cycling through the rainbow
-            Color color = Color.HSVToRGB((float)level / levels.Length, 1, 1);
+                // At level 0 just draw the connections and sphere
+                if (level == 0)
+                {
+                    foreach (Connection connection in graph.GetConnections(node))
+                    {
+                        // Draw the connections between the nodes
+                        Debug.DrawLine(node.GetPosition(), connection.toNode.GetPosition(), color);
+                    }
+                    continue;
+                }
+                
+                // Draw the bounding box of each node at upper levels
+                // Ensure that the bounds are in world space by adding the node's position
+                Vector3 bottomLeft = new Vector3(node.bounds.xMin, node.bounds.yMin, 0) + node.GetPosition();
+                Vector3 topLeft = new Vector3(node.bounds.xMin, node.bounds.yMax, 0) + node.GetPosition();
+                Vector3 topRight = new Vector3(node.bounds.xMax, node.bounds.yMax, 0) + node.GetPosition();
+                Vector3 bottomRight = new Vector3(node.bounds.xMax, node.bounds.yMin, 0) + node.GetPosition();
 
-            // Draw the groups of the current level
-            for (int i = 0; i < levels[level].groups.Length; i++)
-            {
-                NodeGroup group = levels[level].groups[i];
-
-                // Get the corners of the group
-                Vector3 bottomLeft = new Vector3(group.fromNode.x, group.toNode.y, 0);
-                Vector3 topLeft = new Vector3(group.fromNode.x, group.fromNode.y, 0);
-                Vector3 topRight = new Vector3(group.toNode.x, group.fromNode.y, 0);
-                Vector3 bottomRight = new Vector3(group.toNode.x, group.toNode.y, 0);
-
-                // Draw the bounding box
+                // Side lines
                 Debug.DrawLine(bottomLeft, topLeft, color);
                 Debug.DrawLine(topLeft, topRight, color);
                 Debug.DrawLine(topRight, bottomRight, color);
                 Debug.DrawLine(bottomRight, bottomLeft, color);
-            }
-        }
-    }
 
-    public void DrawTiles()
-    {
-        if (minGizmosLevels > 0 || maxGizmosLevels < 0) return;
-        foreach (Node node in tileGraph.GetNodes())
-        {
-            foreach (Connection connection in tileGraph.GetConnections(node))
-            {
-                Debug.DrawLine(node.GetPosition(), connection.toNode.GetPosition(), Color.green);
+                // Draw the connections between the nodes
+                foreach (Connection connection in graph.GetConnections(node))
+                {
+                    Debug.DrawLine(node.GetPosition(), connection.toNode.GetPosition(), color);
+                }
             }
         }
     }
@@ -184,25 +181,24 @@ public class TileClassifier : MonoBehaviour
     void Start()
     {
         // Generate the tile graph
-        GenerateTileGraph();
+        PathFinderManager.instance.graph = GenerateTileGraph();
 
         // Generate the hierarchical graph based on the children GameObjects
-        GenerateGraphGroups();
+        PathFinderManager.instance.hierarchicalGraph = GenerateHierarchicalGraph();
     }
 
     void Update()
     {
         if (debugInfo)
         {
-            DrawGroups();
-            DrawTiles();
+            DrawGraph();
         }
     }
 
-    private void GenerateTileGraph() 
+    private Graph GenerateTileGraph() 
     {
+        if (tileGraph != null) return tileGraph;
         tileGraph = new Graph();
-        PathFinderManager.instance.graph = tileGraph;
 
         foreach (Vector3 position in tilemap.cellBounds.allPositionsWithin) 
         {
@@ -223,6 +219,79 @@ public class TileClassifier : MonoBehaviour
                 }
             }            
         }
+
+        return tileGraph;
+    }
+
+    private HierarchicalGraph GenerateHierarchicalGraph()
+    {
+        if (hierarchicalGraph != null) return hierarchicalGraph;
+        hierarchicalGraph = new HierarchicalGraph();
+
+        if (tileGraph == null) GenerateTileGraph();
+        
+        // Add the tile graph as the first level
+        hierarchicalGraph.levels.Add(tileGraph);
+
+        // Add the upper levels
+        int level = 1;
+
+        // The children of the TileClassifier GameObject are the levels
+        foreach (Transform levelTransform in transform)
+        {
+            hierarchicalGraph.levels.Add(new Graph());
+
+            List<Node> nodes = new List<Node>();
+
+            // Inside each level, the children are the nodes
+            foreach (Transform child in levelTransform)
+            {
+                // The RectTransform defines the bounds
+                RectTransform rectTransform = child.GetComponent<RectTransform>();
+                
+                // Create a new upper node
+                Node node = new Node(level);
+
+                // Set the bounds and center of the upper node
+                node.bounds = rectTransform.rect;
+                node.center = rectTransform.position;
+
+                // Add the node to the nodes list
+                nodes.Add(node);
+            }
+
+            // Find the connections between the nodes
+            for (int i = 0; i < nodes.Count; i++)
+            {
+                for (int j = i+1; j < nodes.Count; j++)
+                {
+                    Node fromNode = nodes[i];
+                    Node toNode = nodes[j];
+
+                    // If the nodes have a connection from the lower level, add it
+                    bool hasConnection = false;
+                    foreach (Node lowerNode in hierarchicalGraph.levels[level-1].GetNodes())
+                    {
+                        foreach (Connection connection in hierarchicalGraph.levels[level-1].GetConnections(lowerNode))
+                        {
+                            if (fromNode.Contains(connection.fromNode.GetPosition()) && toNode.Contains(connection.toNode.GetPosition()) ||
+                                fromNode.Contains(connection.toNode.GetPosition()) && toNode.Contains(connection.fromNode.GetPosition()))
+                            {
+                                hierarchicalGraph.AddConnection(level, fromNode, toNode);
+                                hierarchicalGraph.AddConnection(level, toNode, fromNode);
+                                hasConnection = true;
+                                break;
+                            }
+                        }
+                        if (hasConnection) break;
+                    }
+                }
+            }
+
+            level++;
+        }
+
+        return hierarchicalGraph;
     }
 
     public bool IsWalkableTile(Vector3 position) 
@@ -241,31 +310,5 @@ public class TileClassifier : MonoBehaviour
         }
 
         return false;
-    }
-
-    private void GenerateGraphGroups() {
-        levels = new GraphLevel[transform.childCount];
-        for (int i = 0; i < transform.childCount; i++)
-        {
-            Transform levelTransform = transform.GetChild(i);
-            GraphLevel level = new GraphLevel();
-            levels[i] = level;
-
-            level.groups = new NodeGroup[levelTransform.childCount];
-            for (int j = 0; j < levelTransform.childCount; j++)
-            {
-                RectTransform groupTransform = levelTransform.GetChild(j).GetComponent<RectTransform>();
-                NodeGroup group = new NodeGroup();
-                level.groups[j] = group;
-
-                // Get the corners of the group
-                Vector3[] corners = new Vector3[4];
-                groupTransform.GetWorldCorners(corners);
-
-                group.fromNode = new Vector2(corners[1].x, corners[1].y); // Top left
-                group.toNode = new Vector2(corners[3].x, corners[3].y); // Bottom right
-            }
-        }
-        PathFinderManager.instance.graphLevels = levels;
     }
 }

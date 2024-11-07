@@ -187,9 +187,10 @@ public class PathFinderManager : MonoBehaviour
 
 		// Repeat recursively with half the path
 		Connection[] halfRight = HierarchicalPathFindAStar(startPos, path[path.Length/2].fromNode.GetPosition());
+		Connection[] middle = HierarchicalPathFindAStar(path[path.Length/2].fromNode.GetPosition(), path[path.Length/2].toNode.GetPosition());
 		Connection[] halfLeft = HierarchicalPathFindAStar(path[path.Length/2].toNode.GetPosition(), endPos);
 
 		// Return the combined path
-		return halfRight.Concat(halfLeft).ToArray();
+		return halfRight.Concat(middle).Concat(halfLeft).ToArray();
 	}
 }

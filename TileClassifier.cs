@@ -14,7 +14,8 @@ public class TileClassifier : MonoBehaviour
     
     // Levels for hierarchical graph
     public GraphLevel[] levels;
-    public int gizmosLevels = 0;
+    public int minGizmosLevels = 0;
+    public int maxGizmosLevels = 0;
     public bool debugInfo = false;
 
     #region Gizmos and Debug + Input System + Singleton Initialization
@@ -26,11 +27,14 @@ public class TileClassifier : MonoBehaviour
         controls = new InputSystem_Actions();
 
         // Toggle debug info
-        controls.UI.ToggleMap.performed += ctx => debugInfo = !debugInfo;
+        controls.DebugUI.ToggleMap.performed += ctx => debugInfo = !debugInfo;
 
         // Increase/decrease the number of levels shown
-        controls.Player.Previous.performed += ctx => gizmosLevels = (int)Mathf.Repeat(gizmosLevels-1, levels.Length+1);
-        controls.Player.Next.performed += ctx => gizmosLevels = (int)Mathf.Repeat(gizmosLevels+1, levels.Length+1);
+        controls.DebugUI.DecreaseMinLevel.performed += ctx => minGizmosLevels = Mathf.Clamp(minGizmosLevels-1, 0, maxGizmosLevels);
+        controls.DebugUI.IncreaseMinLevel.performed += ctx => minGizmosLevels = Mathf.Clamp(minGizmosLevels+1, 0, maxGizmosLevels);
+
+        controls.DebugUI.DecreaseMaxLevel.performed += ctx => maxGizmosLevels = Mathf.Clamp(maxGizmosLevels-1, minGizmosLevels, levels.Length);
+        controls.DebugUI.IncreaseMaxLevel.performed += ctx => maxGizmosLevels = Mathf.Clamp(maxGizmosLevels+1, minGizmosLevels, levels.Length);
 
         if (instance == null)
         {
@@ -60,12 +64,16 @@ public class TileClassifier : MonoBehaviour
             return;
         }
 
-        // Draw the levels
+        // Draw the upper levels
         for (int level = 0; level < transform.childCount; level++)
         {
-            if (level+1 > gizmosLevels)
+            if (level+1 < minGizmosLevels)
             {
                 continue;
+            }
+            if (level+1 > maxGizmosLevels)
+            {
+                break;
             }
             // Color is based on the level, cycling through the rainbow
             Gizmos.color = Color.HSVToRGB((float)level / transform.childCount, 1, 1);
@@ -103,7 +111,7 @@ public class TileClassifier : MonoBehaviour
         // Draw the walkable tiles
         foreach (Vector3 position in tilemap.cellBounds.allPositionsWithin)
         {
-            if (gizmosLevels < 0) break;
+            if (minGizmosLevels > 0 || maxGizmosLevels < 0) break;
 
             if (IsWalkableTile(position))
             {
@@ -126,12 +134,16 @@ public class TileClassifier : MonoBehaviour
 
     public void DrawGroups()
     {
-        // Draw the levels
+        // Draw the upper levels
         for (int level = 0; level < levels.Length; level++)
         {
-            if (level+1 > gizmosLevels)
+            if (level+1 < minGizmosLevels)
             {
                 continue;
+            }
+            if (level+1 > maxGizmosLevels)
+            {
+                break;
             }
             // Color is based on the level, cycling through the rainbow
             Color color = Color.HSVToRGB((float)level / levels.Length, 1, 1);
@@ -158,7 +170,7 @@ public class TileClassifier : MonoBehaviour
 
     public void DrawTiles()
     {
-        if (gizmosLevels < 0) return;
+        if (minGizmosLevels > 0 || maxGizmosLevels < 0) return;
         foreach (Node node in tileGraph.GetNodes())
         {
             foreach (Connection connection in tileGraph.GetConnections(node))

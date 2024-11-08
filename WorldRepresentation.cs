@@ -27,6 +27,30 @@ public class WorldRepresentationEditor : Editor
             EditorUtility.SetDirty(wrld);
             Debug.Log("Connections cleared!");
         }
+
+        if (GUILayout.Button("Check for duplicates"))
+        {
+            foreach (Transform levelTransform in wrld.transform)
+            {
+                for (int i = 0; i < levelTransform.childCount; i++)
+                {
+                    Transform nodeTransform = levelTransform.GetChild(i);
+
+                    for (int j = i+1; j < levelTransform.childCount; j++)
+                    {
+                        Transform otherTransform = levelTransform.GetChild(j);
+
+                        if (nodeTransform.position.Equals(otherTransform.position))
+                        {
+                            Debug.LogWarning("Overlapping nodes found!");
+                            Debug.LogWarning("Node 1: " + nodeTransform.name);
+                            Debug.LogWarning("Node 2: " + otherTransform.name);
+                        }
+                    }
+                }
+            }
+            Debug.Log("Duplicates checked!");
+        }
     }
 }
 
@@ -130,10 +154,14 @@ public class WorldRepresentation : MonoBehaviour
             // Each level has a different color
             Gizmos.color = colors[level % colors.Length];
 
-            // At level 0, draw the tilemap nodes
-            if (level == 0 && tilemap != null && drawSpheres)
+            if (level == 0)
             {
-                DrawTileMapNodes();
+                if (tilemap != null && drawSpheres)
+                {
+                    // Draw tilemap nodes
+                    DrawTileMapNodes();
+                }
+                // Skip to the next iteration to avoid accessing transform.GetChild(-1)
                 continue;
             }
 

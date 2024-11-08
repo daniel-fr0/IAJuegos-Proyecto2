@@ -12,19 +12,19 @@ public class WorldRepresentationEditor : Editor
     {
         DrawDefaultInspector();
 
-        WorldRepresentation tileClassifier = (WorldRepresentation)target;
+        WorldRepresentation wrld = (WorldRepresentation)target;
         if (GUILayout.Button("Calculate Connections"))
         {
-            tileClassifier.CalculateConnections();
-            EditorUtility.SetDirty(tileClassifier);
+            wrld.CalculateConnections();
+            EditorUtility.SetDirty(wrld);
             Debug.Log("Connections calculated!");
         }
 
         if (GUILayout.Button("Clear Connections"))
         {
-            tileClassifier.connectionsAvailable = false;
-            tileClassifier.worldConnections = null;
-            EditorUtility.SetDirty(tileClassifier);
+            wrld.connectionsAvailable = false;
+            wrld.worldConnections = null;
+            EditorUtility.SetDirty(wrld);
             Debug.Log("Connections cleared!");
         }
     }

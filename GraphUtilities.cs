@@ -36,10 +36,12 @@ public class Node
 		return center;
 	}
 
-	public bool Contains(Vector3 position)
+	public bool Contains(Node other)
 	{
 		Vector3 leftBottom = new Vector3(bounds.xMin, bounds.yMin, 0) + GetPosition();
 		Vector3 rightTop = new Vector3(bounds.xMax, bounds.yMax, 0) + GetPosition();
+
+		Vector3 position = other.GetPosition();
 
 		return position.x >= leftBottom.x && position.x <= rightTop.x &&
 			position.y >= leftBottom.y && position.y <= rightTop.y;

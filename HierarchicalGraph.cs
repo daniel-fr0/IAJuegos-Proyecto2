@@ -78,7 +78,7 @@ public class HierarchicalGraph
 		foreach (Node lowerNode in levels[level-1].GetNodes())
 		{
 			// If the lower node is contained in the fromNode, set the parent
-			if (fromNode.Contains(lowerNode.GetPosition()))
+			if (fromNode.Contains(lowerNode))
 			{
 				lowerNode.parent = fromNode;
 				fromChildren.Add(lowerNode);
@@ -92,7 +92,7 @@ public class HierarchicalGraph
 				}
 			}
 			// If the lower node is contained in the toNode, set the parent
-			else if (toNode.Contains(lowerNode.GetPosition()))
+			else if (toNode.Contains(lowerNode))
 			{
 				lowerNode.parent = toNode;
 				toChildren.Add(lowerNode);

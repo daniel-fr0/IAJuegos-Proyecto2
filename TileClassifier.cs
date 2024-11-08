@@ -7,9 +7,7 @@ using System.Collections.Generic;
 public class TileClassifier : MonoBehaviour
 {
     public Tilemap tilemap;
-
-    private Graph tileGraph;
-    public HierarchicalGraph hierarchicalGraph;
+    private HierarchicalGraph hierarchicalGraph;
 
     // Walkable tile ids
 	public int[] walkableTiles = {0,1,8,9,11};
@@ -62,7 +60,7 @@ public class TileClassifier : MonoBehaviour
     public bool drawBoundingBoxes = true;
     public bool drawConnections = true;
     public bool DrawSpheres = true;
-    private Color[] colors = { Color.green, Color.red, Color.cyan, Color.magenta, Color.yellow, Color.blue, Color.white, Color.black };
+    public Color[] colors = { Color.green, Color.red, Color.cyan, Color.magenta, Color.yellow, Color.blue, Color.white, Color.black };
     public void OnDrawGizmos()
     {
         // If in game mode, don't draw path
@@ -71,7 +69,6 @@ public class TileClassifier : MonoBehaviour
             return;
         }
 
-        GenerateTileGraph();
         GenerateHierarchicalGraph();
         DrawGizmos();
     }
@@ -196,11 +193,26 @@ public class TileClassifier : MonoBehaviour
 
     void Start()
     {
-        // Generate the tile graph
-        PathFinderManager.instance.tileGraph = GenerateTileGraph();
-
         // Generate the hierarchical graph based on the children GameObjects
         PathFinderManager.instance.hierarchicalGraph = GenerateHierarchicalGraph();
+
+        // Check if all nodes have representative children
+        bool hasErrors = false;
+        for (int i = 1; i < hierarchicalGraph.Height(); i++)
+        {
+            foreach (Node node in hierarchicalGraph.levels[i].GetNodes())
+            {
+                if (node.representativeChild == null)
+                {
+                    Debug.LogWarning($"Node {node.GetPosition()} at level {i} does not have a representative child");
+                    hasErrors = true;
+                }
+            }
+        }
+        if (hasErrors)
+        {
+            Debug.LogError("There are errors in the hierarchical graph");
+        }
     }
 
     void Update()
@@ -213,8 +225,7 @@ public class TileClassifier : MonoBehaviour
 
     private Graph GenerateTileGraph() 
     {
-        if (tileGraph != null) return tileGraph;
-        tileGraph = new Graph();
+        Graph tileGraph = new Graph();
 
         foreach (Vector3 position in tilemap.cellBounds.allPositionsWithin) 
         {
@@ -244,7 +255,7 @@ public class TileClassifier : MonoBehaviour
         if (hierarchicalGraph != null) return hierarchicalGraph;
         hierarchicalGraph = new HierarchicalGraph();
 
-        if (tileGraph == null) GenerateTileGraph();
+        Graph tileGraph = GenerateTileGraph();
         
         // Add the tile graph as the first level
         hierarchicalGraph.levels.Add(tileGraph);

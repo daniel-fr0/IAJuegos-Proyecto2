@@ -35,6 +35,22 @@ public class HierarchicalGraph
 		// If the level is higher, look for the parent
 		if (level > node.level)
 		{
+			if (node.parent == null)
+			{
+				foreach (Node upperNode in levels[node.level+1].GetNodes())
+				{
+					if (upperNode.Contains(node))
+					{
+						node.parent = upperNode;
+						return GetNode(level, node.parent);
+					}
+				}
+
+				// If the parent is not found, return null
+				return null;
+			}
+
+			// Try to get the node from the parent
 			return GetNode(level, node.parent);
 		}
 

@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 public class PathFinderManager : MonoBehaviour
@@ -148,56 +147,52 @@ public class PathFinderManager : MonoBehaviour
 
 	public Connection[] HierarchicalPathFindAStar(Vector3 startPos, Vector3 endPos)
 	{
-		// Go up the hierarchy until we find the level in which the start and end nodes are in the same node, then stay at the previous level
-		Node startNode = new Node(startPos);
-		Node endNode = new Node(endPos);
+		Node start = new Node(startPos);
+		Node end = new Node(endPos);
 
-		// If the start and end nodes are the same, return an empty path
-		if (startNode.Equals(endNode))
-		{
-			return new Connection[0];
-		}
-
-		Node parentStart = startNode;
-		Node parentEnd = endNode;
-		
-		int level = 0;
-		while (level+1 < hierarchicalGraph.Height() && !parentStart.Equals(parentEnd))
-		{
-			parentStart = hierarchicalGraph.GetNode(level+1, startNode);
-			parentEnd = hierarchicalGraph.GetNode(level+1, endNode);
-
-			if (parentStart == null && parentEnd == null || parentStart.Equals(parentEnd))
-			{
-				break;
-			}
-
-			startNode = parentStart;
-			endNode = parentEnd;
-			level++;
-		}
-
-		// Use A* at the level to find the path
-		Graph graph = hierarchicalGraph.levels[level];
-		Connection[] path = PathFindAStar(graph, startNode, endNode);
-
-		// If the path is null, return null
-		if (path == null)
+		return HierarchicalPathFindAStar(start, end);
+	}
+	public Connection[] HierarchicalPathFindAStar(Node start, Node end, int level = -1)
+	{
+		// If the start and end nodes are the same there's no path
+		if (start.Equals(end))
 		{
 			return null;
 		}
 
-		if (level == 0)
+		// Set up initial pair of nodes
+		Node startNode = start;
+		Node endNode = end;
+		if (level == -1)
+		{
+			level = hierarchicalGraph.Height() - 1;
+		}
+		
+		// Descend the hierarchy until the pair are in different regions
+		for (; level >= 0; level--)
+		{
+			// Get the nodes at the current level
+			startNode = hierarchicalGraph.GetNode(level, start);
+			endNode = hierarchicalGraph.GetNode(level, end);
+
+			// If the start and end nodes are finally different, stop looking
+			if (!startNode.Equals(endNode))
+			{
+				break;
+			}
+		}
+
+		// Use A* at the level to find the path
+		Graph graph = hierarchicalGraph.levels[endNode.level];
+		Connection[] path = PathFindAStar(graph, startNode, endNode);
+
+		// If the path is of level 0, return it, that's the current plan
+		if (endNode.level == 0)
 		{
 			return path;
 		}
 
-		// Repeat recursively with half the path
-		Connection[] halfRight = HierarchicalPathFindAStar(startPos, path[path.Length/2].fromNode.GetPosition());
-		Connection[] middle = HierarchicalPathFindAStar(path[path.Length/2].fromNode.GetPosition(), path[path.Length/2].toNode.GetPosition());
-		Connection[] halfLeft = HierarchicalPathFindAStar(path[path.Length/2].toNode.GetPosition(), endPos);
-
-		// Return the combined path
-		return halfRight.Concat(middle).Concat(halfLeft).ToArray();
+		// Otherwise, we need to descend the hierarchy until we get a local plan
+		return HierarchicalPathFindAStar(start, path[0].toNode, endNode.level - 1);
 	}
 }

@@ -91,27 +91,6 @@ public class WorldRepresentation : MonoBehaviour
     public WorldLevel[] worldConnections;
     [HideInInspector]
     public bool connectionsAvailable = false;
-    private void DrawTileMapGizmos()
-    {
-        foreach (Vector3 position in tilemap.cellBounds.allPositionsWithin)
-        {
-            if (IsWalkableTile(position))
-            {
-                if (drawSpheres) Gizmos.DrawSphere(position + new Vector3(0.5f, 0.5f), 0.1f);
-                if (!drawConnections) continue;
-
-                Vector3[] directions = { Vector3.up, Vector3.down, Vector3.left, Vector3.right };
-                foreach (Vector3 direction in directions)
-                {
-                    Vector3 neighbourPosition = position + direction;
-                    if (IsWalkableTile(neighbourPosition))
-                    {
-                        Gizmos.DrawLine(position + new Vector3(0.5f, 0.5f), neighbourPosition + new Vector3(0.5f, 0.5f));
-                    }
-                }
-            }
-        }
-    }
 
     public void OnDrawGizmos()
     {
@@ -126,6 +105,17 @@ public class WorldRepresentation : MonoBehaviour
 
         // Draw connections
         DrawConnections();
+    }
+
+    private void DrawTileMapNodes()
+    {
+        foreach (Vector3 position in tilemap.cellBounds.allPositionsWithin)
+        {
+            if (IsWalkableTile(position))
+            {
+                Gizmos.DrawSphere(position + new Vector3(0.5f, 0.5f), 0.1f);
+            }
+        }
     }
 
     public void DrawNodes()
@@ -143,9 +133,9 @@ public class WorldRepresentation : MonoBehaviour
             Gizmos.color = colors[level % colors.Length];
 
             // At level 0, draw the tilemap nodes
-            if (level == 0 && tilemap != null)
+            if (level == 0 && tilemap != null && drawSpheres)
             {
-                DrawTileMapGizmos();
+                DrawTileMapNodes();
                 continue;
             }
 
@@ -185,18 +175,18 @@ public class WorldRepresentation : MonoBehaviour
     {
         if (!drawConnections || !connectionsAvailable) return;
 
-        // Draw the saved higher connections
-        for (int level = 1; level <= worldConnections.Length; level++)
+        // Draw the saved connections
+        for (int level = 0; level < worldConnections.Length; level++)
         {
             if (level < minGizmosLevels || maxGizmosLevels < level) continue;
 
-            WorldConnection[] connections = worldConnections[level-1].connections;
+            WorldConnection[] connections = worldConnections[level].connections;
             if (connections == null) continue;
 
             Gizmos.color = colors[level % colors.Length];
             foreach (WorldConnection connection in connections)
             {
-                Gizmos.DrawLine(connection.fromRectTransform.position, connection.toRectTransform.position);
+                Gizmos.DrawLine(connection.from, connection.to);
             }
         }
     }
@@ -277,7 +267,7 @@ public class WorldRepresentation : MonoBehaviour
                             if (from.Contains(fromNode) && to.Contains(toNode) ||
                                 from.Contains(toNode) && to.Contains(fromNode))
                             {
-                                connectionList.Add(new WorldConnection { fromRectTransform = rectFrom, toRectTransform = rectTo });
+                                connectionList.Add(new WorldConnection { fromRectTransform = rectFrom, toRectTransform = rectTo, from = rectFrom.position, to = rectTo.position });
                                 break;
                             }
                         }
@@ -285,7 +275,7 @@ public class WorldRepresentation : MonoBehaviour
                     }
 
                     // If it's a higher level, check the connections in the previous level
-                    foreach (WorldConnection connection in worldConnections[level-2].connections)
+                    foreach (WorldConnection connection in worldConnections[level-1].connections)
                     {
                         Node fromNode = new Node(level-2);
                         fromNode.bounds = connection.fromRectTransform.rect;
@@ -298,7 +288,7 @@ public class WorldRepresentation : MonoBehaviour
                         if (from.Contains(fromNode) && to.Contains(toNode) ||
                             from.Contains(toNode) && to.Contains(fromNode))
                         {
-                            connectionList.Add(new WorldConnection { fromRectTransform = rectFrom, toRectTransform = rectTo });
+                            connectionList.Add(new WorldConnection { fromRectTransform = rectFrom, toRectTransform = rectTo, from = rectFrom.position, to = rectTo.position });
                             break;
                         }
                     }
@@ -306,7 +296,7 @@ public class WorldRepresentation : MonoBehaviour
             }
 
             // Add this level's higher connections to the array
-            worldConnections[level-1] = new WorldLevel { connections = connectionList.ToArray() };
+            worldConnections[level] = new WorldLevel { connections = connectionList.ToArray() };
         }
     }
     public void DrawGraph()

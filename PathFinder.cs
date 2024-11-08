@@ -32,6 +32,9 @@ public class PathFinder : MonoBehaviour
 
 		// Set the path to the pathFollower
 		pathFollower.path = path;
+
+		// Be able to use flee behavior to slow down
+		pathFollower.seeker.fleeRadius = 0;
     }
 
     // Update is called once per frame
@@ -39,7 +42,6 @@ public class PathFinder : MonoBehaviour
     {
 		if (ReachedGoal())
 		{
-			path.numPoints = 0;
 			path.points = null;
 			return;
 		}
@@ -62,7 +64,6 @@ public class PathFinder : MonoBehaviour
 		newPoints[newPoints.Length-1] = connections[connections.Length-1].toNode.GetPosition();
 
 		// Overwrite the path points
-		path.numPoints = newPoints.Length;
 		path.points = newPoints;
     }
 
@@ -87,6 +88,7 @@ public class PathFinder : MonoBehaviour
 		if (ReachedGoal())
 		{
 			// Slow into a stop
+			// With the flee radius as 0, nothing will trigger the flee behavior
 			pathFollower.seeker.flee = true;
 		}
 		else

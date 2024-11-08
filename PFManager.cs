@@ -4,7 +4,6 @@ using UnityEngine;
 
 public class PathFinderManager : MonoBehaviour
 {
-	public Graph tileGraph;
 	public HierarchicalGraph hierarchicalGraph;
 
 	#region Singleton Initialization
@@ -23,6 +22,14 @@ public class PathFinderManager : MonoBehaviour
 	}
 	#endregion
 
+	public Connection[] PathFindAStar(Vector3 startPos, Vector3 endPos)
+	{
+		Node start = new Node(startPos);
+		Node end = new Node(endPos);
+
+		return PathFindAStar(hierarchicalGraph.levels[0], start, end);
+	}
+	
 	public Connection[] PathFindAStar(Graph graph, Node start, Node end)
 	{
 		NodeRecord current = null;

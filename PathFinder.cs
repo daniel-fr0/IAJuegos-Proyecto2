@@ -46,8 +46,8 @@ public class PathFinder : MonoBehaviour
 			else return;
 		}
 
-		if (!TileClassifier.instance.IsWalkableTile(goalPosition)) return;
-		if (!TileClassifier.instance.IsWalkableTile(transform.position)) return;
+		if (!WorldRepresentation.instance.IsWalkableTile(goalPosition)) return;
+		if (!WorldRepresentation.instance.IsWalkableTile(transform.position)) return;
 	
 		connections = pfm.HierarchicalPathFindAStar(transform.position, goalPosition);
 

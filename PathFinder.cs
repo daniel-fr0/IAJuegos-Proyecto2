@@ -10,11 +10,13 @@ public class PathFinder : MonoBehaviour
 	private Path path = null;
 	private Connection[] connections = null;
 	private PathFinderManager pfm;
+	private WorldRepresentation wrld;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         pfm = PathFinderManager.instance;
+		wrld = WorldRepresentation.instance;
 		if (target != null)
 		{
 			goalPosition = target.position;
@@ -35,25 +37,18 @@ public class PathFinder : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-		if (ReachedGoal()) return;
-
-        if (path.numPoints != 0)
+		if (ReachedGoal())
 		{
-			if (target != null && target.position != goalPosition)
-			{
-				goalPosition = target.position;
-			}
-			else return;
+			path.numPoints = 0;
+			path.points = null;
+			return;
 		}
-
-		if (!WorldRepresentation.instance.IsWalkableTile(goalPosition)) return;
-		if (!WorldRepresentation.instance.IsWalkableTile(transform.position)) return;
 	
 		connections = pfm.HierarchicalPathFindAStar(transform.position, goalPosition);
 
 		if (connections == null || connections.Length == 0) return;
 
-		// Create a new path
+		// Create a new path, it has 1 more point than the connections
 		Vector3[] newPoints = new Vector3[connections.Length + 1];
 
 		// Add the points to the path
@@ -63,8 +58,8 @@ public class PathFinder : MonoBehaviour
 			newPoints[i] = point;
 		}
 
-		if (newPoints.Length > 1)
-			newPoints[newPoints.Length-1] = connections[connections.Length-1].toNode.GetPosition();
+		// Add the last point of the path
+		newPoints[newPoints.Length-1] = connections[connections.Length-1].toNode.GetPosition();
 
 		// Overwrite the path points
 		path.numPoints = newPoints.Length;
@@ -73,27 +68,18 @@ public class PathFinder : MonoBehaviour
 
 	private bool ReachedGoal()
 	{
-		bool completed = false;
+		if (target != null && target.position != goalPosition && wrld.IsWalkableTile(target.position))
+		{
+			goalPosition = target.position;
+		}
+
 		Vector3 distance = goalPosition - transform.position;
 		Node goal = new Node(goalPosition);
 		Node current = new Node(transform.position);
 
-		if (!current.Equals(goal)) return false;
+		if (distance.magnitude < targetRadius) return true;
 
-		if (distance.magnitude < targetRadius)
-		{
-			path.numPoints = 0;
-			path.points = null;
-			completed = true;
-		}
-
-		if (target != null && target.position != goalPosition)
-		{
-			goalPosition = target.position;
-			completed = false;
-		}
-
-		return completed;
+		return current.Equals(goal);
 	}
 
 	void LateUpdate()

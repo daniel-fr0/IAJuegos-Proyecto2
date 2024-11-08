@@ -11,6 +11,7 @@ public class PathFinder : MonoBehaviour
 	private Connection[] connections = null;
 	private PathFinderManager pfm;
 	private WorldRepresentation wrld;
+	public bool exactPathFinding = false;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -45,8 +46,15 @@ public class PathFinder : MonoBehaviour
 			path.points = null;
 			return;
 		}
-	
-		connections = pfm.HierarchicalPathFindAStar(transform.position, goalPosition);
+
+		if (exactPathFinding)
+		{
+			connections = pfm.PathFindAStar(transform.position, goalPosition);
+		}
+		else
+		{
+			connections = pfm.HierarchicalPathFindAStar(transform.position, goalPosition);
+		}
 
 		if (connections == null || connections.Length == 0) return;
 

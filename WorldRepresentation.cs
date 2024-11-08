@@ -4,7 +4,6 @@ using UnityEngine.Tilemaps;
 using System.Linq;
 using System;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 
 [CustomEditor(typeof(WorldRepresentation))]
 public class WorldRepresentationEditor : Editor
@@ -38,11 +37,6 @@ public class WorldRepresentation : MonoBehaviour
 
     // Walkable tile ids
 	public int[] walkableTiles = {0,1,8,9,11};
-    
-    // Levels for hierarchical graph
-    public int minGizmosLevels = 0;
-    public int maxGizmosLevels = 0;
-    public bool debugInfo = false;
 
     #region Input System + Singleton Initialization
     private InputSystem_Actions controls;
@@ -84,6 +78,10 @@ public class WorldRepresentation : MonoBehaviour
     #endregion
 
     #region Gizmos + Debug
+    // Debug variables
+    public bool debugInfo = false;
+    public int minGizmosLevels = 0;
+    public int maxGizmosLevels = 0;
     public bool drawBoundingBoxes = true;
     public bool drawConnections = true;
     public bool drawSpheres = true;
@@ -299,19 +297,18 @@ public class WorldRepresentation : MonoBehaviour
             worldConnections[level] = new WorldLevel { connections = connectionList.ToArray() };
         }
     }
+
     public void DrawGraph()
     {
-        // Draw each level
-        int level = -1;
-        foreach (Graph graph in pfm.hierarchicalGraph.levels)
-        {
-            level++;
-            if (level < minGizmosLevels || maxGizmosLevels < level)
-            {
-                continue;
-            }
+        int minLevel = Mathf.Max(0, minGizmosLevels);
+        int maxLevel = Mathf.Clamp(maxGizmosLevels, -1, pfm.hierarchicalGraph.Height()-1);
 
+        // Draw permited levels
+        for (int level = minLevel; level <= maxLevel; level++)
+        {
             Color color = colors[level % colors.Length];
+            Graph graph = pfm.hierarchicalGraph.levels[level];
+
             foreach (Node node in graph.GetNodes())
             {
                 // At level 0 just draw the connections and sphere
@@ -371,24 +368,12 @@ public class WorldRepresentation : MonoBehaviour
     {
         Graph tileGraph = new Graph();
 
-        foreach (Vector3 position in tilemap.cellBounds.allPositionsWithin) 
+        foreach (WorldConnection connection in worldConnections[0].connections)
         {
-            if (IsWalkableTile(position))
-            {
-                Node node = new Node(position);
+            Node fromNode = new Node(connection.from);
+            Node toNode = new Node(connection.to);
 
-                // Add walkable connections
-                Vector3[] directions = { Vector3.up, Vector3.down, Vector3.left, Vector3.right };
-                foreach (Vector3 direction in directions) 
-                {
-                    Vector3 neighbourPosition = position + direction;
-                    if (IsWalkableTile(neighbourPosition)) 
-                    {
-                        Node neighbourNode = new Node(neighbourPosition);
-                        tileGraph.AddConnection(node, neighbourNode);
-                    }
-                }
-            }            
+            tileGraph.AddConnection(fromNode, toNode);
         }
 
         return tileGraph;
@@ -397,6 +382,14 @@ public class WorldRepresentation : MonoBehaviour
     private HierarchicalGraph GenerateHierarchicalGraph()
     {
         if (pfm.hierarchicalGraph != null) return pfm.hierarchicalGraph;
+        
+        // If connections have not been calculated, return null
+        if (!connectionsAvailable)
+        {
+            Debug.LogWarning("No connections available. Please calculate connections first.");
+            return null;
+        }
+
         HierarchicalGraph hierarchicalGraph = new HierarchicalGraph();
 
         Graph tileGraph = GenerateTileGraph();
@@ -405,60 +398,20 @@ public class WorldRepresentation : MonoBehaviour
         hierarchicalGraph.levels.Add(tileGraph);
 
         // Add the upper levels
-        int level = 1;
-
-        // The children of the TileClassifier GameObject are the levels
-        foreach (Transform levelTransform in transform)
+        for (int level = 1; level < worldConnections.Length; level++)
         {
-            hierarchicalGraph.levels.Add(new Graph());
-
-            List<Node> nodes = new List<Node>();
-
-            // Inside each level, the children are the nodes
-            foreach (Transform child in levelTransform)
+            foreach (WorldConnection connection in worldConnections[level].connections)
             {
-                // The RectTransform defines the bounds
-                RectTransform rectTransform = child.GetComponent<RectTransform>();
-                
-                // Create a new upper node
-                Node node = new Node(level);
+                Node fromNode = new Node(level);
+                fromNode.bounds = connection.fromRectTransform.rect;
+                fromNode.center = connection.fromRectTransform.position;
 
-                // Set the bounds and center of the upper node
-                node.bounds = rectTransform.rect;
-                node.center = rectTransform.position;
+                Node toNode = new Node(level);
+                toNode.bounds = connection.toRectTransform.rect;
+                toNode.center = connection.toRectTransform.position;
 
-                // Add the node to the nodes list
-                nodes.Add(node);
+                hierarchicalGraph.AddConnection(level, fromNode, toNode);
             }
-
-            // Find the connections between the nodes
-            for (int i = 0; i < nodes.Count; i++)
-            {
-                for (int j = i+1; j < nodes.Count; j++)
-                {
-                    Node fromNode = nodes[i];
-                    Node toNode = nodes[j];
-
-                    // Iterate at the lower level to find the connection
-                    bool hasConnection = false;
-                    foreach (Node lowerNode in hierarchicalGraph.levels[level-1].GetNodes())
-                    {
-                        foreach (Connection connection in hierarchicalGraph.levels[level-1].GetConnections(lowerNode))
-                        {
-                            if (fromNode.Contains(connection.fromNode) && toNode.Contains(connection.toNode) ||
-                                fromNode.Contains(connection.toNode) && toNode.Contains(connection.fromNode))
-                            {
-                                hierarchicalGraph.AddConnection(level, fromNode, toNode);
-                                hasConnection = true;
-                                break;
-                            }
-                        }
-                        if (hasConnection) break;
-                    }
-                }
-            }
-
-            level++;
         }
 
         return hierarchicalGraph;

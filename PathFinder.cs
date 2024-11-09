@@ -3,15 +3,36 @@ using UnityEngine;
 public class PathFinder : MonoBehaviour
 {
 	public PathFollowing pathFollower;
-	public Vector3 goalPosition;
+	private Vector3 _goalPosition;
+	public Vector3 goalPosition
+	{
+		get { return _goalPosition; }
+		set {
+			if (wrld.IsWalkableTile(value))
+			{
+				// Set the goal position as the position of the level 0 node
+				_goalPosition = new Node(value).GetPosition();
+			}
+		}
+	}
 	public Transform target;
-	public float targetRadius = 0.5f;
 	private GameObject pathHolder;
 	private Path path = null;
 	private Connection[] connections = null;
 	private PathFinderManager pfm;
 	private WorldRepresentation wrld;
-	public bool exactPathFinding = false;
+
+	// To manage slow down and arrive
+	private Arrive arrive;
+	private Seek seek;
+	public float maxAcceleration = 100.0f;
+	public float maxSpeed = 10.0f;
+	public float nodeTargetRadius = 0.5f;
+	public float nodeSlowRadius = 1.0f;
+	public float nodeTimeToTarget = 0.1f;
+
+	// To toggle between normal and hierarchical path finding
+	public bool precisePathFinding = false;
 
 	#region Input System
 	private InputSystem_Actions controls;
@@ -51,8 +72,34 @@ public class PathFinder : MonoBehaviour
 		// Set the path to the pathFollower
 		pathFollower.path = path;
 
-		// Be able to use flee behavior to slow down
-		pathFollower.seeker.fleeRadius = 0;
+		// Set seek/arrive behavior properties
+		seek = transform.GetComponent<Seek>();
+		arrive = transform.GetComponent<Arrive>();
+
+		if (seek == null || arrive == null)
+		{
+			Debug.LogWarning("Seek or Arrive behavior missing in " + gameObject.name);
+			return;
+		}
+
+		
+		seek.enabled = true;
+		seek.maxAcceleration = maxAcceleration;
+		seek.maxSpeed = maxSpeed;
+
+		arrive.enabled = false;
+		arrive.maxAcceleration = maxAcceleration;
+		arrive.maxSpeed = maxSpeed;
+		arrive.targetRadius = nodeTargetRadius;
+		arrive.slowRadius = nodeSlowRadius;
+		arrive.timeToTarget = nodeTimeToTarget;
+
+		// Create arrive point
+		GameObject arrivePointHolder = new GameObject("Arrive Point");
+		arrivePointHolder.transform.parent = transform;
+		Kinematic arrivePoint = arrivePointHolder.AddComponent<Kinematic>();
+		arrivePoint.freezePosition = true;
+		arrive.target = arrivePoint;
     }
 
     // Update is called once per frame
@@ -64,7 +111,16 @@ public class PathFinder : MonoBehaviour
 			return;
 		}
 
-		if (exactPathFinding)
+		// Do not recalculate if there is a path already leading to the goal
+		if (path.points != null && path.points.Length > 0)
+		{
+			Node goalNode = new Node(goalPosition);
+			Vector3 endPosition = path.points[path.points.Length-1];
+
+			if (goalNode.GetPosition() == endPosition) return;
+		}
+
+		if (precisePathFinding)
 		{
 			connections = pfm.PathFindAStar(transform.position, goalPosition);
 		}
@@ -90,11 +146,14 @@ public class PathFinder : MonoBehaviour
 
 		// Overwrite the path points
 		path.points = newPoints;
+
+		// Make the goal the arrive target, also add the offset because it is a child of the path finder
+		arrive.target.position = goalPosition;
     }
 
 	private bool ReachedGoal()
 	{
-		if (target != null && target.position != goalPosition && wrld.IsWalkableTile(target.position))
+		if (target != null && target.position != goalPosition)
 		{
 			goalPosition = target.position;
 		}
@@ -103,22 +162,18 @@ public class PathFinder : MonoBehaviour
 		Node goal = new Node(goalPosition);
 		Node current = new Node(transform.position);
 
-		if (distance.magnitude < targetRadius) return true;
-
-		return current.Equals(goal);
+		return Arrive(distance.magnitude < nodeSlowRadius || current.Equals(goal));
 	}
 
-	void LateUpdate()
+	private bool Arrive(bool nearTarget)
 	{
-		if (ReachedGoal())
-		{
-			// Slow into a stop
-			// With the flee radius as 0, nothing will trigger the flee behavior
-			pathFollower.seeker.flee = true;
-		}
-		else
-		{
-			pathFollower.seeker.flee = false;
-		}
+		// If the character is near the target, stop moving using arrive behavior
+		Seeker newSeeker = nearTarget ? arrive : seek;
+		
+		arrive.enabled = nearTarget;
+		seek.enabled = !nearTarget;
+		pathFollower.seeker = newSeeker;
+		
+		return nearTarget;
 	}
 }

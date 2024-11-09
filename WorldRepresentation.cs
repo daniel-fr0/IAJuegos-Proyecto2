@@ -80,6 +80,13 @@ public class WorldRepresentation : MonoBehaviour
         controls.DebugUI.DecreaseMaxLevel.performed += ctx => maxGizmosLevels = Mathf.Clamp(maxGizmosLevels-1, minGizmosLevels, pfm.hierarchicalGraph.Height()-1);
         controls.DebugUI.IncreaseMaxLevel.performed += ctx => maxGizmosLevels = Mathf.Clamp(maxGizmosLevels+1, minGizmosLevels, pfm.hierarchicalGraph.Height()-1);
 
+        // Toggle between bounding boxes/connection lines
+        controls.DebugUI.ToggleGraphMode.performed += ctx => 
+        {
+            drawBoundingBoxes = !drawBoundingBoxes;
+            drawConnections = !drawBoundingBoxes;
+        };
+
         if (instance == null)
         {
             instance = this;

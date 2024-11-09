@@ -13,6 +13,23 @@ public class PathFinder : MonoBehaviour
 	private WorldRepresentation wrld;
 	public bool exactPathFinding = false;
 
+	#region Input System
+	private InputSystem_Actions controls;
+	private void Awake()
+	{
+		controls = new InputSystem_Actions();
+		controls.DebugUI.ToggleMap.performed += ctx => path.debugInfo = !path.debugInfo;
+	}
+	private void OnEnable()
+	{
+		controls.Enable();
+	}
+	private void OnDisable()
+	{
+		controls.Disable();
+	}
+	#endregion
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {

@@ -111,15 +111,6 @@ public class PathFinder : MonoBehaviour
 			return;
 		}
 
-		// Do not recalculate if there is a path already leading to the goal
-		if (path.points != null && path.points.Length > 0)
-		{
-			Node goalNode = new Node(goalPosition);
-			Vector3 endPosition = path.points[path.points.Length-1];
-
-			if (goalNode.GetPosition() == endPosition) return;
-		}
-
 		if (precisePathFinding)
 		{
 			connections = pfm.PathFindAStar(transform.position, goalPosition);

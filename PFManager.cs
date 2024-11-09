@@ -172,9 +172,16 @@ public class PathFinderManager : MonoBehaviour
 		for (; level >= 0; level--)
 		{
 			// Get the nodes at the current level
-			startNode = hierarchicalGraph.GetNode(level, start);
-			endNode = hierarchicalGraph.GetNode(level, end);
+			Node nextStart = hierarchicalGraph.GetNode(level, start);
+			Node nextEnd = hierarchicalGraph.GetNode(level, end);
 
+			if (startNode == null || endNode == null)
+			{
+				break;
+			}
+
+			startNode = nextStart;
+			endNode = nextEnd;
 			// If the start and end nodes are finally different, stop looking
 			if (!startNode.Equals(endNode))
 			{

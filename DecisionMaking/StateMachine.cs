@@ -4,11 +4,12 @@ public class StateMachine : MonoBehaviour
 {
     public State initialState;
     public State currentState;
+    public Kinematic stateKinematicData;
 
     void Start()
     {
         currentState = initialState;
-        currentState.EnterState();
+        stateKinematicData = currentState.EnterState(null);
     }
 
     void Update()
@@ -25,9 +26,9 @@ public class StateMachine : MonoBehaviour
         {
             if (transition.IsTriggered())
             {
-                currentState.ExitState();
+                stateKinematicData = currentState.ExitState();
                 currentState = transition.targetState;
-                currentState.EnterState();
+                currentState.EnterState(stateKinematicData);
                 break;
             }
         }

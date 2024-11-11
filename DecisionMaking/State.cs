@@ -4,70 +4,37 @@ using System.Collections.Generic;
 using System.Reflection;
 
 [Serializable]
-public class State
+public class State : MonoBehaviour
 {
 	public string stateName;
-	public List<MonoBehaviour> stateBehaviours = new List<MonoBehaviour>();
+	public GameObject stateObject;
 	public List<Transition> transitions = new List<Transition>();
+	private Kinematic kinematicData;
 
-	private Dictionary<MonoBehaviour, object> savedProperties = new Dictionary<MonoBehaviour, object>();
-
-	public void EnterState()
+	void Start()
 	{
-		// Load any actions assigned to this state
-		// and execute what needs to be done when entering the state
-		foreach (MonoBehaviour behaviour in stateBehaviours)
-		{
-			if (behaviour != null)
-			{
-				LoadProperties(behaviour);
-				behaviour.enabled = true;
-			}
-		}
+		kinematicData = GetComponent<Kinematic>();
 	}
 
-	public void ExitState()
+	public Kinematic EnterState(Kinematic newKinematicData)
 	{
-		// Execute what needs to be done when exiting the state and
-		// save the state of current actions
-		foreach (MonoBehaviour behaviour in stateBehaviours)
+		stateObject.SetActive(true);
+
+		if (newKinematicData != null)
 		{
-			if (behaviour != null)
-			{
-				behaviour.enabled = false;
-				SaveProperties(behaviour);
-			}
+			kinematicData.position = newKinematicData.position;
+			kinematicData.velocity = newKinematicData.velocity;
+			kinematicData.orientation = newKinematicData.orientation;
+			kinematicData.rotation = newKinematicData.rotation;
 		}
+
+		return kinematicData;
 	}
 
-	public void SaveProperties(MonoBehaviour behaviour)
+	public Kinematic ExitState()
 	{
-		var type = behaviour.GetType();
-		var fields = type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-
-		var propertyValues = new Dictionary<string, object>();
-		foreach (var field in fields)
-		{
-			propertyValues[field.Name] = field.GetValue(behaviour);
-		}
-		savedProperties[behaviour] = propertyValues;
-	}
-
-	public void LoadProperties(MonoBehaviour behaviour)
-	{
-		if (savedProperties.ContainsKey(behaviour))
-		{
-			var type = behaviour.GetType();
-			var fields = type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-
-			var propertyValues = savedProperties[behaviour] as Dictionary<string, object>;
-			foreach (var field in fields)
-			{
-				if (propertyValues.ContainsKey(field.Name))
-				{
-					field.SetValue(behaviour, propertyValues[field.Name]);
-				}
-			}
-		}
+		stateObject.SetActive(false);
+		
+		return kinematicData;
 	}
 }

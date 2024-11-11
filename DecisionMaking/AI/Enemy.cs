@@ -1,90 +1,85 @@
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class EnemyAI : MonoBehaviour
 {
 	public StateMachine stateMachine;
-	private Kinematic character;
-	public Kinematic target;
-	public float detectionRadius = 10.0f;
-	public float itemPickUpRadius = 1.0f;
-	public float itemPickUpTime = 0.5f;
-	public Kinematic item;
 	public GameObject worldStatePrefab;
+	private WorldState WS;
 
-	// Actions
-	public ChaseAction chaseAction;
-	public PatrolAction patrolAction;
-	public ChaseAction gatherAction;
+	// State
+	public State chase;
+	public State patrol;
+	public State pickItem;
+
+	// Transition parameters
+	public float detectionRadius = 3.0f;
+	public float itemPickUpRadius = 1.0f;
+	
+	// World information
+	private Kinematic character;
+	private Kinematic target;
+	private Kinematic item;
 
 	void Awake() {
-		// Define states and transitions
-		State patrolState = new State {stateName = "Patrol"};
-		patrolState.stateActions.Add(patrolAction);
-
-		State chaseState = new State {stateName = "Chase"};
-		chaseState.stateActions.Add(chaseAction);
-
-		State gatherState = new State {stateName = "Gather"};
-		gatherState.stateActions.Add(gatherAction);
-
-
+		// Define transitions
 		Transition patrolToChase = new Transition
 		{
 			transitionName = "PatrolToChase",
-			targetState = chaseState,
-			condition = () => Vector3.Distance(character.position, target.position) < detectionRadius
+			targetState = chase,
+			condition = () => target != null
 		};
 
 
 		Transition chaseToPatrol = new Transition
 		{
 			transitionName = "ChaseToPatrol",
-			targetState = patrolState,
-			condition = () => Vector3.Distance(character.position, target.position) > detectionRadius
+			targetState = patrol,
+			condition = () => target == null
 		};
 
-		Transition chaseToGather = new Transition
+		Transition chaseToPickItem = new Transition
 		{
-			transitionName = "ChaseToGather",
-			targetState = gatherState,
+			transitionName = "ChaseToPickItem",
+			targetState = pickItem,
 			condition = () => item != null
 		};
 
 		Transition gatherToChase = new Transition
 		{
-			transitionName = "GatherToChase",
-			targetState = chaseState,
-			condition = () => PickUpItem()
+			transitionName = "PickItemToChase",
+			targetState = chase,
+			condition = () => PickedUpItem()
 		};
 
 		Transition gatherToPatrol = new Transition
 		{
-			transitionName = "GatherToPatrol",
-			targetState = patrolState,
-			condition = () => PickUpItem()
+			transitionName = "PickItemToPatrol",
+			targetState = patrol,
+			condition = () => PickedUpItem()
 		};
 
-		Transition patrolToGather = new Transition
+		Transition patrolToPickItem = new Transition
 		{
-			transitionName = "PatrolToGather",
-			targetState = gatherState,
+			transitionName = "PatrolToPickItem",
+			targetState = pickItem,
 			condition = () => item != null
 		};
 
 		// Add transitions to states, gather has priority
-		patrolState.transitions.Add(patrolToGather);
-		patrolState.transitions.Add(patrolToChase);
+		patrol.transitions.Add(patrolToPickItem);
+		patrol.transitions.Add(patrolToChase);
 
-		chaseState.transitions.Add(chaseToGather);
-		chaseState.transitions.Add(chaseToPatrol);
+		chase.transitions.Add(chaseToPickItem);
+		chase.transitions.Add(chaseToPatrol);
 
-		gatherState.transitions.Add(gatherToChase);
-		gatherState.transitions.Add(gatherToPatrol);
+		pickItem.transitions.Add(gatherToChase);
+		pickItem.transitions.Add(gatherToPatrol);
 
 		// Initialize state machine
-		stateMachine.initialState = patrolState;
+		stateMachine.initialState = patrol;
 	}
 
 	void Start()
@@ -98,39 +93,85 @@ public class EnemyAI : MonoBehaviour
 				return;
 			}
 			Instantiate(worldStatePrefab);
+			WS = WorldState.instance;
+		}
+		else
+		{
+			WS = WorldState.instance;
+		}
+
+		// Check if the states are set
+		if (chase == null || patrol == null || pickItem == null)
+		{
+			Debug.LogError("States not set for EnemyAI in " + gameObject.name);
+			return;
 		}
 
 		// Initialize references
 		character = GetComponent<Kinematic>();
-
-
-		if (target == null) Debug.LogError("Target not set for EnemyAI in " + gameObject.name);
 	}
 
 	void Update()
 	{
-		if (item != null) return;
-
-		// Look for items in the detection radius
-		foreach (Kinematic item in WorldState.instance.items)
+		if (item == null)
 		{
-			if (Vector3.Distance(character.position, item.position) < detectionRadius)
+			// Look for items in the detection radius
+			foreach (Kinematic i in WS.items)
 			{
-				this.item = item.GetComponent<Kinematic>();
-				break;
+				if (Vector3.Distance(character.position, i.position) < detectionRadius)
+				{
+					item = i;
+					break;
+				}
+			}
+		}
+		else
+		{
+			// If the item was picked up by someone else
+			if (!WS.items.Contains(item))
+			{
+				item = null;
+			}
+		}
+
+		if (target == null)
+		{
+			// Look for targets in the detection radius
+			foreach (Kinematic f in WS.friendly)
+			{
+				if (Vector3.Distance(character.position, f.position) < detectionRadius)
+				{
+					target = f;
+					break;
+				}
+			}
+		}
+		else
+		{
+			// If the target reached a safe zone
+			foreach (Node n in WS.safeZones)
+			{
+				if (n.Contains(new Node(target.position)))
+				{
+					target = null;
+					break;
+				}
 			}
 		}
 	}
 
-	public bool PickUpItem()
+	public bool PickedUpItem()
 	{
 		// If the item was picked up by someone else
 		if (item == null) return false;
 
+		// If the item can be picked up
 		if (Vector3.Distance(character.position, item.position) < itemPickUpRadius)
 		{
 			// Pick up the item
+			WS.items.Remove(item);
 			Destroy(item.gameObject);
+			item = null;
 			return true;
 		}
 		return false;

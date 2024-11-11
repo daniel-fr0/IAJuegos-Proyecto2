@@ -2,18 +2,19 @@ using UnityEngine;
 
 public class StateMachine : MonoBehaviour
 {
-    public State state;
+    public State currentState;
+    public State previousState;
     public Kinematic stateKinematicData;
 
     void Start()
     {
-        stateKinematicData = state.EnterState(null);
+        stateKinematicData = currentState.EnterState(null);
     }
 
     void Update()
     {
         // Make sure the current state is not null
-        if (state == null)
+        if (currentState == null)
         {
             Debug.LogError("Current state is null!");
             return;
@@ -26,13 +27,14 @@ public class StateMachine : MonoBehaviour
         }
 
         // Follow the first transition that is triggered
-        foreach (Transition transition in state.transitions)
+        foreach (Transition transition in currentState.transitions)
         {
             if (transition.IsTriggered())
             {
-                stateKinematicData = state.ExitState();
-                state = transition.targetState;
-                stateKinematicData = state.EnterState(stateKinematicData);
+                stateKinematicData = currentState.ExitState();
+                previousState = currentState;
+                currentState = transition.targetState;
+                stateKinematicData = currentState.EnterState(stateKinematicData);
                 break;
             }
         }

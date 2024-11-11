@@ -20,10 +20,10 @@ public class EnemyAI : MonoBehaviour
 	public GameObject item;
 
 	// Transition conditions
-	private bool nearItem = false;
-	private bool itemPickedUp = false;
-	private bool nearTarget = false;
-	private bool targetUnreachable = false;
+	public bool nearItem = false;
+	public bool itemPickedUp = false;
+	public bool nearTarget = false;
+	public bool targetUnreachable = false;
 
 	void DefineTransitions()
 	{
@@ -54,14 +54,14 @@ public class EnemyAI : MonoBehaviour
 		{
 			transitionName = "PickItemToChase",
 			targetState = chase,
-			condition = () => PickedUpItem()
+			condition = () => PickedUpItem() && stateMachine.previousState == chase
 		};
 
 		Transition gatherToPatrol = new Transition
 		{
 			transitionName = "PickItemToPatrol",
 			targetState = patrol,
-			condition = () => PickedUpItem()
+			condition = () => PickedUpItem() && stateMachine.previousState == patrol
 		};
 
 		Transition patrolToPickItem = new Transition
@@ -82,7 +82,7 @@ public class EnemyAI : MonoBehaviour
 		pickItem.transitions.Add(gatherToPatrol);
 
 		// Initialize state machine
-		stateMachine.state = patrol;
+		stateMachine.currentState = patrol;
 	}
 
 	void Start()
@@ -146,6 +146,8 @@ public class EnemyAI : MonoBehaviour
 		// If the item was picked up by someone else
 		if (item.activeSelf == false)
 		{
+			itemPickedUp = true;
+			nearItem = false;
 			return true;
 		}
 
@@ -154,6 +156,8 @@ public class EnemyAI : MonoBehaviour
 		{
 			// Pick up the item
 			item.SetActive(false);
+			itemPickedUp = true;
+			nearItem = false;
 			return true;
 		}
 		return false;

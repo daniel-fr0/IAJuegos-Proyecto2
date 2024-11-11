@@ -131,6 +131,20 @@ public class EnemyAI : MonoBehaviour
 		{
 			Debug.LogWarning("Safe zone not set for EnemyAI in " + gameObject.name);
 		}
+
+		// Start at current position
+		patrol.kinematicData.position = transform.position;
+		chase.kinematicData.position = transform.position;
+		pickItem.kinematicData.position = transform.position;
+		chasePatrol.kinematicData.position = transform.position;
+		stateMachine.stateKinematicData.position = transform.position;
+
+		// Hide sprite
+		SpriteRenderer spriteRenderer = GetComponent<SpriteRenderer>();
+		if (spriteRenderer != null)
+		{
+			spriteRenderer.enabled = false;
+		}
 	}
 	
 	void Update()

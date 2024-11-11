@@ -99,6 +99,20 @@ public class AllyAI : MonoBehaviour
         {
             Debug.LogError("Safe zone not defined in " + gameObject.name);
         }
+
+        // Start at current position
+        waitSafe.kinematicData.position = transform.position;
+        followPlayer.kinematicData.position = transform.position;
+        waitForPlayer.kinematicData.position = transform.position;
+        fallBackToSafeZone.kinematicData.position = transform.position;
+        stateMachine.stateKinematicData.position = transform.position;
+
+        // Hide sprite
+        SpriteRenderer spriteRenderer = GetComponent<SpriteRenderer>();
+        if (spriteRenderer != null)
+        {
+            spriteRenderer.enabled = false;
+        }
     }
 
     // Update is called once per frame

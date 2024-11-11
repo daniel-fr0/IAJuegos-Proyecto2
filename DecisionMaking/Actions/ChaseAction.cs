@@ -72,10 +72,6 @@ public class ChaseAction: MonoBehaviour, Action
 		{
 			character = gameObject.AddComponent<Kinematic>();
 		}
-
-		// add target to pathfinder
-		GameObject targetObject = new GameObject("ChaseTarget");
-		target = targetObject.AddComponent<Kinematic>();
 	}
 
 	public void Load()
@@ -99,9 +95,9 @@ public class ChaseAction: MonoBehaviour, Action
 		lwyg.slowRadius = LWYGslowRadius;
 		lwyg.timeToTarget = LWYGtimeToTarget;
 
-		// Set the target position to the current node position
-		Vector3 nodePosition = new Node(target.position).GetPosition();
-		target.position = nodePosition;
+		// Set the target
+		if (target == null) Debug.LogError("Target is null for ChaseAction in " + gameObject.name);
+		pathFinder.target = target;
 	}
 
 	public void OnStateEnter()

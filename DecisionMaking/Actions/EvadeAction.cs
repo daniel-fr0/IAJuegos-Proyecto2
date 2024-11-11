@@ -1,49 +1,49 @@
 using UnityEngine;
 
-public class WaitAction: MonoBehaviour, Action
+public class EvadeAction: MonoBehaviour, Action
 {
-	// The speed at which the character moves around and turns
+	// Main dynamic parameters
 	public float maxSpeed = 10.0f;
 	public float maxAcceleration = 100.0f;
 	public float maxRotation = 5.0f;
 	public float maxAngularAcceleration = 45.0f;
 
+	// Flee parameters
+	public float fleeRadius = 1.0f;
+	public float fleeTimeToStop = 0.01f;
+
 	// LookWhereYoureGoing parameters
 	public float LWYGslowRadius = 1.0f;
 	public float LWYGtimeToTarget = 0.01f;
 
-	// The action is implemented with a seek behavior
-	public Seek seek;
+	// The action is implemented with seek(flee) and lookWhereYoureGoing behaviors
+	private Seek seek;
+	private LookWhereYoureGoing lwyg;
 
-	// To work, seek needs the following
-	public Kinematic character;
-	public LookWhereYoureGoing lwyg;
-	public Kinematic target;
+	// Base Kinematic parameters
+	private Kinematic character;
+	private Kinematic target;
 	
 	public void Start()
 	{	
 		// Initialize references
 		seek = GetComponent<Seek>();
-		character = GetComponent<Kinematic>();
 		lwyg = GetComponent<LookWhereYoureGoing>();
+		character = GetComponent<Kinematic>();
 
 		// If any of the components are missing, add them
 		if (seek == null)
 		{
 			seek = gameObject.AddComponent<Seek>();
 		}
-		if (character == null)
-		{
-			character = gameObject.AddComponent<Kinematic>();
-		}
 		if (lwyg == null)
 		{
 			lwyg = gameObject.AddComponent<LookWhereYoureGoing>();
 		}
-
-		// add target
-		GameObject targetObject = new GameObject("WaitTarget");
-		target = targetObject.AddComponent<Kinematic>();
+		if (character == null)
+		{
+			character = gameObject.AddComponent<Kinematic>();
+		}
 	}
 
 	public void Load()
@@ -52,7 +52,9 @@ public class WaitAction: MonoBehaviour, Action
 		seek.target = target;
 		seek.maxSpeed = maxSpeed;
 		seek.maxAcceleration = maxAcceleration;
-		seek.flee = false;
+		seek.flee = true;
+		seek.fleeRadius = fleeRadius;
+		seek.timeToStop = fleeTimeToStop;
 
 		// Load lwyk values
 		lwyg.maxAngularAcceleration = maxAngularAcceleration;
@@ -61,8 +63,7 @@ public class WaitAction: MonoBehaviour, Action
 		lwyg.timeToTarget = LWYGtimeToTarget;
 
 		// Set the target
-		Vector3 nodePosition = new Node(target.position).GetPosition();
-		target.position = nodePosition;
+		if (target == null) Debug.LogError("Target is null for EvadeAction in " + gameObject.name);
 		seek.target = target;
 	}
 
@@ -78,6 +79,6 @@ public class WaitAction: MonoBehaviour, Action
 
 	public void Save()
 	{
-
+		
 	}
 }

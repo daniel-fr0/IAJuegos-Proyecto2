@@ -111,22 +111,6 @@ public class EnemyAI : MonoBehaviour
 
 	void Start()
 	{
-		// Initialize world state
-		if (WorldState.instance == null)
-		{
-			if (worldStatePrefab == null)
-			{
-				Debug.LogError("WorldState prefab not set for EnemyAI in " + gameObject.name);
-				return;
-			}
-			Instantiate(worldStatePrefab);
-			WS = WorldState.instance;
-		}
-		else
-		{
-			WS = WorldState.instance;
-		}
-
 		// Check if the states are set
 		if (chase == null || patrol == null || pickItem == null)
 		{

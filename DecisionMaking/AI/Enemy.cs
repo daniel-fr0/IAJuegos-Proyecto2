@@ -22,12 +22,6 @@ public class EnemyAI : MonoBehaviour
 	public GameObject item;
 	private Node safeZoneNode;
 
-	// Transition conditions
-	public bool nearItem = false;
-	public bool itemPickedUp = false;
-	public bool nearTarget = false;
-	public bool targetUnreachable = false;
-
 	void DefineTransitions()
 	{
 		// Define transitions
@@ -128,40 +122,11 @@ public class EnemyAI : MonoBehaviour
 		}
 	}
 
-	void Update()
-	{
-		// Update the conditions
-		if (item.activeSelf == false)
-		{
-			itemPickedUp = true;
-		}
-		else
-		{
-			nearItem = Vector3.Distance(stateMachine.stateKinematicData.position, item.transform.position) < detectionRadius;
-			itemPickedUp = false;
-		}
-
-		foreach (Node safeZone in WS.safeZones)
-		{
-			if (safeZone.Contains(new Node(target.transform.position)))
-			{
-				targetUnreachable = true;
-				return;
-			}
-		}
-
-		targetUnreachable = false;
-
-		nearTarget = Vector3.Distance(stateMachine.stateKinematicData.position, target.transform.position) < detectionRadius;
-	}
-
 	public bool PickedUpItem()
 	{
 		// If the item was picked up by someone else
 		if (item.activeSelf == false)
 		{
-			itemPickedUp = true;
-			nearItem = false;
 			return true;
 		}
 
@@ -170,8 +135,6 @@ public class EnemyAI : MonoBehaviour
 		{
 			// Pick up the item
 			item.SetActive(false);
-			itemPickedUp = true;
-			nearItem = false;
 			return true;
 		}
 		return false;

@@ -17,12 +17,12 @@ public class EvadeAction: MonoBehaviour, Action
 	public float LWYGtimeToTarget = 0.01f;
 
 	// The action is implemented with seek(flee) and lookWhereYoureGoing behaviors
-	private Seek seek;
-	private LookWhereYoureGoing lwyg;
+	public Seek seek;
+	public LookWhereYoureGoing lwyg;
 
 	// Base Kinematic parameters
-	private Kinematic character;
-	private Kinematic target;
+	public Kinematic character;
+	public Kinematic target;
 	
 	public void Start()
 	{	

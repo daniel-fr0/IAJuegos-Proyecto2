@@ -1,6 +1,3 @@
-using System.Collections.Generic;
-using System.Collections.Specialized;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class EnemyAI : MonoBehaviour
@@ -10,26 +7,32 @@ public class EnemyAI : MonoBehaviour
 	private WorldState WS;
 
 	// State
-	public State chase;
 	public State patrol;
+	public State chase;
 	public State pickItem;
 
 	// Transition parameters
-	public float detectionRadius = 3.0f;
+	public float detectionRadius = 5.0f;
 	public float itemPickUpRadius = 1.0f;
 	
 	// World information
-	private Kinematic character;
-	private Kinematic target;
-	private Kinematic item;
+	public GameObject target;
+	public GameObject item;
 
-	void Awake() {
+	// Transition conditions
+	private bool nearItem = false;
+	private bool itemPickedUp = false;
+	private bool nearTarget = false;
+	private bool targetUnreachable = false;
+
+	void DefineTransitions()
+	{
 		// Define transitions
 		Transition patrolToChase = new Transition
 		{
 			transitionName = "PatrolToChase",
 			targetState = chase,
-			condition = () => target != null
+			condition = () => nearTarget && !targetUnreachable
 		};
 
 
@@ -37,14 +40,14 @@ public class EnemyAI : MonoBehaviour
 		{
 			transitionName = "ChaseToPatrol",
 			targetState = patrol,
-			condition = () => target == null
+			condition = () => targetUnreachable
 		};
 
 		Transition chaseToPickItem = new Transition
 		{
 			transitionName = "ChaseToPickItem",
 			targetState = pickItem,
-			condition = () => item != null
+			condition = () => nearItem && !itemPickedUp
 		};
 
 		Transition gatherToChase = new Transition
@@ -65,7 +68,7 @@ public class EnemyAI : MonoBehaviour
 		{
 			transitionName = "PatrolToPickItem",
 			targetState = pickItem,
-			condition = () => item != null
+			condition = () => nearItem
 		};
 
 		// Add transitions to states, gather has priority
@@ -79,7 +82,7 @@ public class EnemyAI : MonoBehaviour
 		pickItem.transitions.Add(gatherToPatrol);
 
 		// Initialize state machine
-		stateMachine.initialState = patrol;
+		stateMachine.state = patrol;
 	}
 
 	void Start()
@@ -108,70 +111,49 @@ public class EnemyAI : MonoBehaviour
 		}
 
 		// Initialize references
-		character = GetComponent<Kinematic>();
+		DefineTransitions();
 	}
 
 	void Update()
 	{
-		if (item == null)
+		// Update the conditions
+		if (item.activeSelf == false)
 		{
-			// Look for items in the detection radius
-			foreach (Kinematic i in WS.items)
-			{
-				if (Vector3.Distance(character.position, i.position) < detectionRadius)
-				{
-					item = i;
-					break;
-				}
-			}
+			itemPickedUp = true;
 		}
 		else
 		{
-			// If the item was picked up by someone else
-			if (!WS.items.Contains(item))
+			nearItem = Vector3.Distance(stateMachine.stateKinematicData.position, item.transform.position) < detectionRadius;
+			itemPickedUp = false;
+		}
+
+		foreach (Node safeZone in WS.safeZones)
+		{
+			if (safeZone.Contains(new Node(target.transform.position)))
 			{
-				item = null;
+				targetUnreachable = true;
+				return;
 			}
 		}
 
-		if (target == null)
-		{
-			// Look for targets in the detection radius
-			foreach (Kinematic f in WS.friendly)
-			{
-				if (Vector3.Distance(character.position, f.position) < detectionRadius)
-				{
-					target = f;
-					break;
-				}
-			}
-		}
-		else
-		{
-			// If the target reached a safe zone
-			foreach (Node n in WS.safeZones)
-			{
-				if (n.Contains(new Node(target.position)))
-				{
-					target = null;
-					break;
-				}
-			}
-		}
+		targetUnreachable = false;
+
+		nearTarget = Vector3.Distance(stateMachine.stateKinematicData.position, target.transform.position) < detectionRadius;
 	}
 
 	public bool PickedUpItem()
 	{
 		// If the item was picked up by someone else
-		if (item == null) return false;
+		if (item.activeSelf == false)
+		{
+			return true;
+		}
 
 		// If the item can be picked up
-		if (Vector3.Distance(character.position, item.position) < itemPickUpRadius)
+		if (Vector3.Distance(stateMachine.stateKinematicData.position, item.transform.position) < itemPickUpRadius)
 		{
 			// Pick up the item
-			WS.items.Remove(item);
-			Destroy(item.gameObject);
-			item = null;
+			item.SetActive(false);
 			return true;
 		}
 		return false;

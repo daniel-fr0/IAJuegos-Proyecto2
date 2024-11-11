@@ -1,29 +1,26 @@
 using UnityEngine;
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 
 [Serializable]
 public class State : MonoBehaviour
 {
 	public string stateName;
-	public GameObject stateObject;
 	public List<Transition> transitions = new List<Transition>();
-	private Kinematic kinematicData;
+	public Kinematic kinematicData;
 
 	void Start()
 	{
 		kinematicData = GetComponent<Kinematic>();
-
-		if (stateObject == null)
+		if (kinematicData == null)
 		{
-			stateObject = gameObject;
+			Debug.LogWarning("Kinematic data not found in state " + stateName);
 		}
 	}
 
 	public Kinematic EnterState(Kinematic newKinematicData)
 	{
-		stateObject.SetActive(true);
+		gameObject.SetActive(true);
 
 		if (newKinematicData != null)
 		{
@@ -38,7 +35,7 @@ public class State : MonoBehaviour
 
 	public Kinematic ExitState()
 	{
-		stateObject.SetActive(false);
+		gameObject.SetActive(false);
 		
 		return kinematicData;
 	}

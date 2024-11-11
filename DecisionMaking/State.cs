@@ -39,7 +39,6 @@ public class State : MonoBehaviour
 			kinematicData.rotation = newKinematicData.rotation;
 			
 			transform.position = newKinematicData.position;
-			transform.rotation = Quaternion.Euler(0, 0, newKinematicData.orientation);
 		}
 
 		return kinematicData;

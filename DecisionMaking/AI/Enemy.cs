@@ -11,16 +11,17 @@ public class EnemyAI : MonoBehaviour
 	public State chase;
 	public State pickItem;
 
-	// Transition parameters
-	public float detectionRadius = 5.0f;
-	public float itemPickUpRadius = 1.0f;
-	public RectTransform safeZoneRectangle;
-	public int safeZoneLevel = 0;
-	
 	// World information
 	public GameObject target;
 	public GameObject item;
+	public RectTransform safeZoneRectangle;
+	public int safeZoneLevel = 1;
 	private Node safeZoneNode;
+
+	// Transition parameters
+	public float detectionRadius = 5.0f;
+	public float itemPickUpRadius = 1.0f;
+	public bool debugInfo = false;
 
 	void DefineTransitions()
 	{
@@ -115,13 +116,21 @@ public class EnemyAI : MonoBehaviour
 		{
 			safeZoneNode = new Node(safeZoneLevel);
 			safeZoneNode.bounds = safeZoneRectangle.rect;
+			safeZoneNode.center = safeZoneRectangle.position;
 		}
 		else
 		{
 			Debug.LogWarning("Safe zone not set for EnemyAI in " + gameObject.name);
 		}
 	}
-
+	
+	void Update()
+	{
+		if (debugInfo)
+		{
+			DebugVisuals.DrawRadius(stateMachine.stateKinematicData.position, detectionRadius, Color.yellow);
+		}
+	}
 	public bool PickedUpItem()
 	{
 		// If the item was picked up by someone else
@@ -165,6 +174,6 @@ public class EnemyAI : MonoBehaviour
 		{
 			return false;
 		}
-		return Vector3.Distance(stateMachine.stateKinematicData.position, item.transform.position) < itemPickUpRadius;
+		return Vector3.Distance(stateMachine.stateKinematicData.position, item.transform.position) < detectionRadius;
 	}
 }

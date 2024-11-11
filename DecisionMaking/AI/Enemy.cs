@@ -3,7 +3,6 @@ using UnityEngine;
 public class EnemyAI : MonoBehaviour
 {
 	public StateMachine stateMachine;
-	public GameObject worldStatePrefab;
 
 	// State
 	public State patrol;
@@ -122,7 +121,7 @@ public class EnemyAI : MonoBehaviour
 		DefineTransitions();
 
 		// Get safe zone node
-		if (safeZoneRectangle != null && safeZoneLevel > 0)
+		if (safeZoneRectangle != null)
 		{
 			safeZoneNode = new Node(safeZoneLevel);
 			safeZoneNode.bounds = safeZoneRectangle.rect;

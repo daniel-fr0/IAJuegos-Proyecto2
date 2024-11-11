@@ -139,6 +139,8 @@ public class EnemyAI : MonoBehaviour
 		{
 			DebugVisuals.DrawRadius(stateMachine.stateKinematicData.position, detectionRadius, Color.yellow);
 		}
+
+		transform.position = stateMachine.stateKinematicData.position;
 	}
 	public bool PickedUpItem()
 	{

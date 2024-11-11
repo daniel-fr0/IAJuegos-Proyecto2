@@ -14,6 +14,11 @@ public class State : MonoBehaviour
 	void Start()
 	{
 		kinematicData = GetComponent<Kinematic>();
+
+		if (stateObject == null)
+		{
+			stateObject = gameObject;
+		}
 	}
 
 	public Kinematic EnterState(Kinematic newKinematicData)

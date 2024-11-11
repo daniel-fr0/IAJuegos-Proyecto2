@@ -3,8 +3,30 @@ using UnityEngine;
 public class StateMachine : MonoBehaviour
 {
     public State currentState;
-    public State previousState;
-    public Kinematic stateKinematicData;
+    private State _previousState;
+    public State previousState
+    {
+        get { return _previousState; }
+        set
+        {
+            if (value != null)
+                _previousState = value;
+            else
+                Debug.LogError("Assigning a null state to previous state!");
+        }
+    }
+    private Kinematic _stateKinematicData;
+    public Kinematic stateKinematicData
+    {
+        get { return _stateKinematicData; }
+        set
+        {
+            if (value != null)
+                _stateKinematicData = value;
+            else
+                Debug.LogError("Assigning a null kinematic data to state kinematic data!");
+        }
+    }
 
     void Start()
     {

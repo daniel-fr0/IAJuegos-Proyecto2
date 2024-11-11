@@ -75,7 +75,6 @@ public class ChaseAction: MonoBehaviour, Action
 
 		// add target to pathfinder
 		GameObject targetObject = new GameObject("ChaseTarget");
-		target.transform.parent = transform;
 		target = targetObject.AddComponent<Kinematic>();
 	}
 

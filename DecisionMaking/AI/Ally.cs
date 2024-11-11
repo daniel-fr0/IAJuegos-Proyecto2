@@ -41,7 +41,7 @@ public class AllyAI : MonoBehaviour
         {
             transitionName = "WaitForPlayerToFollowPlayer",
             targetState = followPlayer,
-            condition = () => NearPlayer()
+            condition = () => NearPlayer() && StopWaiting()
         };
 
         Transition followPlayerToFallbackToSafeZone = new Transition
@@ -55,7 +55,7 @@ public class AllyAI : MonoBehaviour
         {
             transitionName = "WaitForPlayerToFallbackToSafeZone",
             targetState = fallBackToSafeZone,
-            condition = () => NearEnemy()
+            condition = () => NearEnemy() && StopWaiting()
         };
 
         Transition fallBackToSafeZoneToWaitSafe = new Transition
@@ -108,6 +108,8 @@ public class AllyAI : MonoBehaviour
         {
             DebugVisuals.DrawRadius(stateMachine.stateKinematicData.position, detectionRadius, Color.yellow);
         }
+
+        transform.position = stateMachine.stateKinematicData.position;
     }
 
     private bool NearPlayer()
@@ -128,5 +130,19 @@ public class AllyAI : MonoBehaviour
     private bool GotRescued()
     {
         return safeZoneNode.Contains(new Node(player.transform.position));
+    }
+
+    private bool StopWaiting()
+    {
+        // take into account that the kinematic properties have an offset
+        // make it stop completely
+        stateMachine.stateKinematicData.velocity = Vector3.zero;
+        stateMachine.stateKinematicData.rotation = 0;
+
+        // take the transform's position
+        Transform transform = stateMachine.stateKinematicData.transform;
+        stateMachine.stateKinematicData.position = transform.position;
+
+        return true;
     }
 }

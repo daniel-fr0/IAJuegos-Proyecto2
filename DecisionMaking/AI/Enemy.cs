@@ -1,3 +1,4 @@
+using System.Data;
 using UnityEngine;
 
 public class EnemyAI : MonoBehaviour
@@ -10,6 +11,7 @@ public class EnemyAI : MonoBehaviour
 	public State patrol;
 	public State chase;
 	public State pickItem;
+	public State chasePatrol;
 
 	// World information
 	public GameObject target;
@@ -21,6 +23,7 @@ public class EnemyAI : MonoBehaviour
 	// Transition parameters
 	public float detectionRadius = 5.0f;
 	public float itemPickUpRadius = 1.0f;
+	public float patrolArriveRadius = 0.25f;
 	public bool debugInfo = false;
 
 	void DefineTransitions()
@@ -33,14 +36,6 @@ public class EnemyAI : MonoBehaviour
 			condition = () => NearTarget() && CanChaseTarget()
 		};
 
-
-		Transition chaseToPatrol = new Transition
-		{
-			transitionName = "ChaseToPatrol",
-			targetState = patrol,
-			condition = () => !CanChaseTarget()
-		};
-
 		Transition chaseToPickItem = new Transition
 		{
 			transitionName = "ChaseToPickItem",
@@ -48,18 +43,11 @@ public class EnemyAI : MonoBehaviour
 			condition = () => CanLookForItem()
 		};
 
-		Transition gatherToChase = new Transition
+		Transition pickItemToChase = new Transition
 		{
 			transitionName = "PickItemToChase",
 			targetState = chase,
 			condition = () => PickedUpItem() && stateMachine.previousState == chase
-		};
-
-		Transition gatherToPatrol = new Transition
-		{
-			transitionName = "PickItemToPatrol",
-			targetState = patrol,
-			condition = () => PickedUpItem() && stateMachine.previousState == patrol
 		};
 
 		Transition patrolToPickItem = new Transition
@@ -69,15 +57,54 @@ public class EnemyAI : MonoBehaviour
 			condition = () => CanLookForItem()
 		};
 
-		// Add transitions to states, gather has priority
+		Transition pickItemToPatrol = new Transition
+		{
+			transitionName = "PickItemToPatrol",
+			targetState = chasePatrol,
+			condition = () => PickedUpItem() && stateMachine.previousState == patrol && ReturnToPatrol()
+		};
+
+		Transition chaseToPatrol = new Transition
+		{
+			transitionName = "ChaseToPatrol",
+			targetState = chasePatrol,
+			condition = () => !CanChaseTarget() && ReturnToPatrol()
+		};
+
+		Transition chasePatrolToPatrol = new Transition
+		{
+			transitionName = "ChasePatrolToPatrol",
+			targetState = patrol,
+			condition = () => ArrivedToPatrol()
+		};
+
+		Transition chasePatrolToChase = new Transition
+		{
+			transitionName = "ChasePatrolToChase",
+			targetState = chase,
+			condition = () => NearTarget() && CanChaseTarget()
+		};
+
+		Transition chasePatrolToPickItem = new Transition
+		{
+			transitionName = "ChasePatrolToPickItem",
+			targetState = pickItem,
+			condition = () => CanLookForItem()
+		};
+		
+
+		// Add transitions to states, pickItem has priority
 		patrol.transitions.Add(patrolToPickItem);
 		patrol.transitions.Add(patrolToChase);
 
 		chase.transitions.Add(chaseToPickItem);
-		chase.transitions.Add(chaseToPatrol);
+		chase.transitions.Add(chaseToPatrol); // First goes to chasePatrol to return to patrol
 
-		pickItem.transitions.Add(gatherToChase);
-		pickItem.transitions.Add(gatherToPatrol);
+		pickItem.transitions.Add(pickItemToChase);
+		pickItem.transitions.Add(pickItemToPatrol); // First goes to chasePatrol to return to patrol
+
+		chasePatrol.transitions.Add(chasePatrolToPickItem);
+		chasePatrol.transitions.Add(chasePatrolToChase);
 
 		// Initialize state machine
 		stateMachine.currentState = patrol;
@@ -175,5 +202,16 @@ public class EnemyAI : MonoBehaviour
 			return false;
 		}
 		return Vector3.Distance(stateMachine.stateKinematicData.position, item.transform.position) < detectionRadius;
+	}
+
+	private bool ReturnToPatrol()
+	{
+		chasePatrol.GetComponent<PathFinder>().target = patrol.kinematicData;
+		return true;
+	}
+
+	private bool ArrivedToPatrol()
+	{
+		return Vector3.Distance(stateMachine.stateKinematicData.position, patrol.kinematicData.position) < patrolArriveRadius;
 	}
 }

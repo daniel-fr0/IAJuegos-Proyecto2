@@ -19,6 +19,12 @@ public class StateMachine : MonoBehaviour
             return;
         }
 
+        if (stateKinematicData == null)
+        {
+            Debug.LogError("Kinematic data is null!");
+            return;
+        }
+
         // Follow the first transition that is triggered
         foreach (Transition transition in state.transitions)
         {

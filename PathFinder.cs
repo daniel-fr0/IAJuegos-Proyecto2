@@ -62,7 +62,7 @@ public class PathFinder : MonoBehaviour
 		}
 
 		// Create a path holder
-		pathHolder = new GameObject(gameObject.name + "Path");
+		pathHolder = new GameObject(gameObject.name + "Path for PathFinder");
 		pathHolder.transform.parent = transform;
 		pathHolder.AddComponent<Path>();
 		path = pathHolder.GetComponent<Path>();
@@ -108,6 +108,12 @@ public class PathFinder : MonoBehaviour
 		if (ReachedGoal())
 		{
 			path.points = null;
+			return;
+		}
+
+		if (!wrld.IsWalkableTile(transform.position))
+		{
+			Debug.LogWarning("Character is not on a walkable tile!");
 			return;
 		}
 

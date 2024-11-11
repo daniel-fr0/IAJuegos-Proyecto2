@@ -5,7 +5,6 @@ using System.Collections.Generic;
 [Serializable]
 public class State : MonoBehaviour
 {
-	public string stateName;
 	public List<Transition> transitions = new List<Transition>();
 	public Kinematic kinematicData;
 

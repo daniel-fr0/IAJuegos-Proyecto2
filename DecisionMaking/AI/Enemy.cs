@@ -105,6 +105,7 @@ public class EnemyAI : MonoBehaviour
 
 		chasePatrol.transitions.Add(chasePatrolToPickItem);
 		chasePatrol.transitions.Add(chasePatrolToChase);
+		chasePatrol.transitions.Add(chasePatrolToPatrol);
 
 		// Initialize state machine
 		stateMachine.currentState = patrol;

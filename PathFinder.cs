@@ -15,7 +15,7 @@ public class PathFinder : MonoBehaviour
 			}
 		}
 	}
-	public Transform target;
+	public Kinematic target;
 	private GameObject pathHolder;
 	private Path path = null;
 	private Connection[] connections = null;
@@ -62,7 +62,7 @@ public class PathFinder : MonoBehaviour
 		}
 
 		// Create a path holder
-		pathHolder = new GameObject("Path Finder Holder");
+		pathHolder = new GameObject(gameObject.name + "Path");
 		pathHolder.transform.parent = transform;
 		pathHolder.AddComponent<Path>();
 		path = pathHolder.GetComponent<Path>();

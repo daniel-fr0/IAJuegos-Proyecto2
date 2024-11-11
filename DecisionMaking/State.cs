@@ -9,6 +9,15 @@ public class State : MonoBehaviour
 	public List<Transition> transitions = new List<Transition>();
 	public Kinematic kinematicData;
 
+	void Awake()
+	{
+		kinematicData = GetComponent<Kinematic>();
+		if (kinematicData == null)
+		{
+			Debug.LogWarning("Kinematic data not found in state " + stateName);
+		}
+	}
+
 	void Start()
 	{
 		kinematicData = GetComponent<Kinematic>();

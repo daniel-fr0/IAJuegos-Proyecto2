@@ -1,7 +1,5 @@
-using System;
 using System.Collections.Generic;
 
-[Serializable]
 public class State
 {
 	public string stateName;

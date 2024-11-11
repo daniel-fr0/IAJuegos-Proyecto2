@@ -1,3 +1,4 @@
+using UnityEngine;
 using System.Collections.Generic;
 
 public class State
@@ -14,6 +15,7 @@ public class State
 		{
 			action.Load();
 			action.OnStateEnter();
+			(action as MonoBehaviour).enabled = true;
 		}
 	}
 
@@ -25,6 +27,7 @@ public class State
 		{
 			action.Save();
 			action.OnStateExit();
+			(action as MonoBehaviour).enabled = false;
 		}
 	}
 }

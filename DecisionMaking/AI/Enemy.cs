@@ -13,36 +13,21 @@ public class EnemyAI : MonoBehaviour
 	public Kinematic item;
 	public GameObject worldStatePrefab;
 
-	public Dictionary<string, Action> actions = new Dictionary<string, Action>();
+	// Actions
+	public ChaseAction chaseAction;
+	public PatrolAction patrolAction;
+	public ChaseAction gatherAction;
 
-	void Start()
-	{
-		// Initialize world state
-		if (WorldState.instance == null)
-		{
-			if (worldStatePrefab == null)
-			{
-				Debug.LogError("WorldState prefab not set for EnemyAI in " + gameObject.name);
-				return;
-			}
-			Instantiate(worldStatePrefab);
-		}
-
-		// Initialize references
-		character = GetComponent<Kinematic>();
-
-
-		if (target == null) Debug.LogError("Target not set for EnemyAI in " + gameObject.name);
-
+	void Awake() {
 		// Define states and transitions
 		State patrolState = new State {stateName = "Patrol"};
-		patrolState.stateActions.Add(actions["Patrol"]);
+		patrolState.stateActions.Add(patrolAction);
 
 		State chaseState = new State {stateName = "Chase"};
-		chaseState.stateActions.Add(actions["Chase"]);
+		chaseState.stateActions.Add(chaseAction);
 
 		State gatherState = new State {stateName = "Gather"};
-		gatherState.stateActions.Add(actions["Gather"]);
+		gatherState.stateActions.Add(gatherAction);
 
 
 		Transition patrolToChase = new Transition
@@ -97,6 +82,29 @@ public class EnemyAI : MonoBehaviour
 
 		gatherState.transitions.Add(gatherToChase);
 		gatherState.transitions.Add(gatherToPatrol);
+
+		// Initialize state machine
+		stateMachine.initialState = patrolState;
+	}
+
+	void Start()
+	{
+		// Initialize world state
+		if (WorldState.instance == null)
+		{
+			if (worldStatePrefab == null)
+			{
+				Debug.LogError("WorldState prefab not set for EnemyAI in " + gameObject.name);
+				return;
+			}
+			Instantiate(worldStatePrefab);
+		}
+
+		// Initialize references
+		character = GetComponent<Kinematic>();
+
+
+		if (target == null) Debug.LogError("Target not set for EnemyAI in " + gameObject.name);
 	}
 
 	void Update()

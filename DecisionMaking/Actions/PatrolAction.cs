@@ -71,7 +71,7 @@ public class PatrolAction: MonoBehaviour, Action
 
 		// Set the target
 		if (target == null) Debug.LogError("Target is null for PatrolAction in " + gameObject.name);
-		seek.target = target;		
+		else seek.target = target;		
 	}
 
 	public void Save()

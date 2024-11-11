@@ -43,7 +43,6 @@ public class WaitAction: MonoBehaviour, Action
 
 		// add target
 		GameObject targetObject = new GameObject("WaitTarget");
-		target.transform.parent = transform;
 		target = targetObject.AddComponent<Kinematic>();
 	}
 

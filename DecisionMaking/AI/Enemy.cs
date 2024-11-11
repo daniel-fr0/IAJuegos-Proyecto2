@@ -4,7 +4,6 @@ public class EnemyAI : MonoBehaviour
 {
 	public StateMachine stateMachine;
 	public GameObject worldStatePrefab;
-	private WorldState WS;
 
 	// State
 	public State patrol;

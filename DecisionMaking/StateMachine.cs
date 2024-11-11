@@ -32,7 +32,7 @@ public class StateMachine : MonoBehaviour
             {
                 stateKinematicData = state.ExitState();
                 state = transition.targetState;
-                state.EnterState(stateKinematicData);
+                stateKinematicData = state.EnterState(stateKinematicData);
                 break;
             }
         }

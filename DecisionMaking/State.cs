@@ -13,7 +13,7 @@ public class State : MonoBehaviour
 		kinematicData = GetComponent<Kinematic>();
 		if (kinematicData == null)
 		{
-			Debug.LogError("Kinematic data not found in state " + stateName);
+			Debug.LogError("Kinematic data not found in state " + gameObject.name);
 		}
 	}
 
@@ -22,7 +22,7 @@ public class State : MonoBehaviour
 		kinematicData = GetComponent<Kinematic>();
 		if (kinematicData == null)
 		{
-			Debug.LogError("Kinematic data not found in state " + stateName);
+			Debug.LogError("Kinematic data not found in state " + gameObject.name);
 		}
 	}
 

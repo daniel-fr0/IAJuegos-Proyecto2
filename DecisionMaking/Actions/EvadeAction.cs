@@ -67,18 +67,22 @@ public class EvadeAction: MonoBehaviour, Action
 		seek.target = target;
 	}
 
-	public void OnStateEnter()
+	public void Save()
 	{
 		
+	}
+
+	public void OnStateEnter()
+	{
+		// Enable behaviors
+		seek.enabled = true;
+		lwyg.enabled = true;
 	}
 
 	public void OnStateExit()
 	{
-		
-	}
-
-	public void Save()
-	{
-		
+		// Disable behaviors
+		seek.enabled = false;
+		lwyg.enabled = false;
 	}
 }

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class ChaseAction: MonoBehaviour, Action
+public class PatrolAction: MonoBehaviour, Action
 {
 	// Main dynamic parameters
 	public float maxSpeed = 10.0f;
@@ -12,24 +12,12 @@ public class ChaseAction: MonoBehaviour, Action
 	public float LWYGslowRadius = 1.0f;
 	public float LWYGtimeToTarget = 0.01f;
 
-	// Arrive parameters
-	public float arriveTargetRadius = 0.5f;
-	public float arriveSlowRadius = 1.0f;
-	public float arriveTimeToTarget = 0.01f;
-
-	// PathFinder parameters
-	public float nodeTargetRadius = 0.5f;
-	public float nodeSlowRadius = 1.0f;
-	public float nodeTimeToTarget = 0.01f;
-
 	// PathFollowing parameters (followPathRabbit)
 	public Path path;
 	public float pathTargetOffset = 0.25f;
 
-	// The action is implemented with seek, arrive, pathfinder, followPathRabbit and lookWhereYoureGoing behaviors
+	// The action is implemented with seek, followPathRabbit and lookWhereYoureGoing behaviors
 	public Seek seek;
-	public Arrive arrive;
-	public PathFinder pathFinder;
 	public FollowPathRabbit followPathRabbit;
 	public LookWhereYoureGoing lwyg;
 
@@ -41,8 +29,6 @@ public class ChaseAction: MonoBehaviour, Action
 	{	
 		// Initialize references
 		seek = GetComponent<Seek>();
-		arrive = GetComponent<Arrive>();
-		pathFinder = GetComponent<PathFinder>();
 		followPathRabbit = GetComponent<FollowPathRabbit>();
 		lwyg = GetComponent<LookWhereYoureGoing>();
 		character = GetComponent<Kinematic>();
@@ -51,14 +37,6 @@ public class ChaseAction: MonoBehaviour, Action
 		if (seek == null)
 		{
 			seek = gameObject.AddComponent<Seek>();
-		}
-		if (arrive == null)
-		{
-			arrive = gameObject.AddComponent<Arrive>();
-		}
-		if (pathFinder == null)
-		{
-			pathFinder = gameObject.AddComponent<PathFinder>();
 		}
 		if (followPathRabbit == null)
 		{
@@ -81,13 +59,9 @@ public class ChaseAction: MonoBehaviour, Action
 		seek.maxSpeed = maxSpeed;
 		seek.maxAcceleration = maxAcceleration;
 
-		// Load arrive values
-		arrive.target = target;
-		arrive.maxSpeed = maxSpeed;
-		arrive.maxAcceleration = maxAcceleration;
-		arrive.targetRadius = arriveTargetRadius;
-		arrive.slowRadius = arriveSlowRadius;
-		arrive.timeToTarget = arriveTimeToTarget;
+		// Load followPathRabbit values
+		followPathRabbit.path = path;
+		followPathRabbit.targetOffset = pathTargetOffset;
 
 		// Load lwyk values
 		lwyg.maxAngularAcceleration = maxAngularAcceleration;
@@ -96,39 +70,28 @@ public class ChaseAction: MonoBehaviour, Action
 		lwyg.timeToTarget = LWYGtimeToTarget;
 
 		// Set the target
-		if (target == null) Debug.LogError("Target is null for ChaseAction in " + gameObject.name);
-		pathFinder.target = target;
-		seek.target = target;
-		arrive.target = target;
-
-		// Set the path
-		if (path == null) Debug.LogError("Path is null for ChaseAction in " + gameObject.name);
-		followPathRabbit.path = path;
-		followPathRabbit.targetOffset = pathTargetOffset;
+		if (target == null) Debug.LogError("Target is null for PatrolAction in " + gameObject.name);
+		seek.target = target;		
 	}
 
 	public void Save()
 	{
-		target = seek.target;
 		path = followPathRabbit.path;
+		target = seek.target;
 	}
 
 	public void OnStateEnter()
 	{
-		// Enable all behaviors
+		// Enable behaviors
 		seek.enabled = true;
-		arrive.enabled = false; // We start with seek
-		pathFinder.enabled = true;
 		followPathRabbit.enabled = true;
-		lwyg.enabled = true;		
+		lwyg.enabled = true;
 	}
 
 	public void OnStateExit()
 	{
-		// Disable all behaviors
+		// Disable behaviors
 		seek.enabled = false;
-		arrive.enabled = false;
-		pathFinder.enabled = false;
 		followPathRabbit.enabled = false;
 		lwyg.enabled = false;
 	}

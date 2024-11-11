@@ -66,18 +66,22 @@ public class WaitAction: MonoBehaviour, Action
 		seek.target = target;
 	}
 
+	public void Save()
+	{
+
+	}
+
 	public void OnStateEnter()
 	{
-		
+		// Enable all behaviors
+		seek.enabled = true;
+		lwyg.enabled = true;
 	}
 
 	public void OnStateExit()
 	{
-		
-	}
-
-	public void Save()
-	{
-
+		// Disable all behaviors
+		seek.enabled = false;
+		lwyg.enabled = false;
 	}
 }

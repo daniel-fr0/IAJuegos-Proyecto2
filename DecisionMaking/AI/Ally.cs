@@ -101,11 +101,7 @@ public class AllyAI : MonoBehaviour
         }
 
         // Start at current position
-        waitSafe.kinematicData.position = transform.position;
-        followPlayer.kinematicData.position = transform.position;
-        waitForPlayer.kinematicData.position = transform.position;
-        fallBackToSafeZone.kinematicData.position = transform.position;
-        stateMachine.stateKinematicData.position = transform.position;
+        stateMachine.currentState.transform.position = transform.position;
 
         // Hide sprite
         SpriteRenderer spriteRenderer = GetComponent<SpriteRenderer>();

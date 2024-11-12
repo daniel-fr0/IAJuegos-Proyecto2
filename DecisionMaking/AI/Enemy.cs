@@ -58,7 +58,7 @@ public class EnemyAI : MonoBehaviour
 		{
 			transitionName = "PickItemToPatrol",
 			targetState = chasePatrol,
-			condition = () => PickedUpItem() && stateMachine.previousState == patrol && ReturnToPatrol()
+			condition = () => PickedUpItem() && (stateMachine.previousState == patrol || stateMachine.previousState == chasePatrol) && ReturnToPatrol()
 		};
 
 		Transition chaseToPatrol = new Transition
@@ -133,11 +133,7 @@ public class EnemyAI : MonoBehaviour
 		}
 
 		// Start at current position
-		patrol.kinematicData.position = transform.position;
-		chase.kinematicData.position = transform.position;
-		pickItem.kinematicData.position = transform.position;
-		chasePatrol.kinematicData.position = transform.position;
-		stateMachine.stateKinematicData.position = transform.position;
+		stateMachine.currentState.transform.position = transform.position;
 
 		// Hide sprite
 		SpriteRenderer spriteRenderer = GetComponent<SpriteRenderer>();

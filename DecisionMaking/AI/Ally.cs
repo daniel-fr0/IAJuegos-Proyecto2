@@ -18,7 +18,8 @@ public class AllyAI : MonoBehaviour
     private Node safeZoneNode;
 
     // Transition parameters
-    public float detectionRadius = 5.0f;
+    public float enemyDetectionRadius = 5.0f;
+    public float allyDetectionRadius = 7.0f;
     public bool debugInfo = false;
 
     void DefineTransitions()
@@ -117,7 +118,8 @@ public class AllyAI : MonoBehaviour
         if (debugInfo)
         {
             Vector3 position = stateMachine.currentState == waitForPlayer ? transform.position : stateMachine.stateKinematicData.position;
-            DebugVisuals.DrawRadius(position, detectionRadius, Color.yellow);
+            DebugVisuals.DrawRadius(position, enemyDetectionRadius, Color.yellow);
+            DebugVisuals.DrawRadius(position, allyDetectionRadius, Color.green);
         }
 
         transform.position = stateMachine.stateKinematicData.position;
@@ -125,12 +127,12 @@ public class AllyAI : MonoBehaviour
 
     private bool NearPlayer()
     {
-        return Vector3.Distance(transform.position, player.transform.position) < detectionRadius;
+        return Vector3.Distance(transform.position, player.transform.position) < allyDetectionRadius;
     }
 
     private bool NearEnemy()
     {
-        return Vector3.Distance(transform.position, enemy.transform.position) < detectionRadius;
+        return Vector3.Distance(transform.position, enemy.transform.position) < enemyDetectionRadius;
     }
 
     private bool InSafeZone()

@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class AllyAI : MonoBehaviour
 {
-    public StateMachine stateMachine;
+    public StateMachineAI stateMachine;
 
     // State
     public State waitSafe;

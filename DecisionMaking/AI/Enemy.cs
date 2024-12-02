@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class EnemyAI : MonoBehaviour
 {
-	public StateMachine stateMachine;
+	public StateMachineAI stateMachine;
 
 	// State
 	public State patrol;

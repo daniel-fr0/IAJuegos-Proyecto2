@@ -68,7 +68,7 @@ public class ShadowCaster2DGenerator
     [UnityEditor.MenuItem("Generate Shadow Casters", menuItem = "Tools/Generate Shadow Casters")]
     public static void GenerateShadowCasters()
     {
-        CompositeCollider2D[] colliders = GameObject.FindObjectsOfType<CompositeCollider2D>();
+        CompositeCollider2D[] colliders = GameObject.FindObjectsByType<CompositeCollider2D>(FindObjectsSortMode.None);
  
         for(int i = 0; i < colliders.Length; ++i)
         {
@@ -79,7 +79,7 @@ public class ShadowCaster2DGenerator
     [UnityEditor.MenuItem("Generate Shadow Casters (Self Shadows)", menuItem = "Tools/Generate Shadow Casters (Self Shadows)")]
     public static void GenerateShadowCastersSelfShadows()
     {
-        CompositeCollider2D[] colliders = GameObject.FindObjectsOfType<CompositeCollider2D>();
+        CompositeCollider2D[] colliders = GameObject.FindObjectsByType<CompositeCollider2D>(FindObjectsSortMode.None);
  
         for (int i = 0; i < colliders.Length; ++i)
         {

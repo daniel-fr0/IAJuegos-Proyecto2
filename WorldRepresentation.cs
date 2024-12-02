@@ -238,7 +238,11 @@ public class WorldRepresentation : MonoBehaviour
             if (IsWalkableTile(position))
             {
                 // Add walkable connections
-                Vector3[] directions = { Vector3.up, Vector3.down, Vector3.left, Vector3.right };
+                Vector3[] directions = { 
+                    Vector3.up, Vector3.down, Vector3.left, Vector3.right,
+                    Vector3.up + Vector3.left, Vector3.up + Vector3.right,
+                    Vector3.down + Vector3.left, Vector3.down + Vector3.right
+                };
                 foreach (Vector3 direction in directions)
                 {
                     Vector3 neighbourPosition = position + direction;

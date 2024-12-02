@@ -350,18 +350,18 @@ public class WorldRepresentation : MonoBehaviour
 
             foreach (Node node in graph.GetNodes())
             {
-                // At level 0 just draw the connections and sphere
-                if (level == 0)
+                // Draw the connections
+                if (drawConnections)
                 {
                     foreach (Connection connection in graph.GetConnections(node))
                     {
                         // Draw the connections between the nodes
                         Debug.DrawLine(node.GetPosition(), connection.toNode.GetPosition(), color);
                     }
-                    continue;
                 }
                 
-                if (drawBoundingBoxes)
+                // At higher levels, draw the bounding boxes
+                if (level != 0 && drawBoundingBoxes)
                 {
                     // Draw the bounding box of each node at upper levels
                     // Ensure that the bounds are in world space by adding the node's position
@@ -375,13 +375,6 @@ public class WorldRepresentation : MonoBehaviour
                     Debug.DrawLine(topLeft, topRight, color);
                     Debug.DrawLine(topRight, bottomRight, color);
                     Debug.DrawLine(bottomRight, bottomLeft, color);
-                }
-
-                // Draw the connections between the nodes
-                if (!drawConnections) continue;
-                foreach (Connection connection in graph.GetConnections(node))
-                {
-                    Debug.DrawLine(node.GetPosition(), connection.toNode.GetPosition(), color);
                 }
             }
         }

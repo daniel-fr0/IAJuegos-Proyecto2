@@ -33,6 +33,8 @@ public class PathFinder : MonoBehaviour
 
 	// To toggle between normal and hierarchical path finding
 	public bool precisePathFinding = false;
+	public bool tacticalPathfinding = false;
+	public float tacticalWeight = 1;
 
 	#region Input System
 	private InputSystem_Actions controls;
@@ -55,6 +57,11 @@ public class PathFinder : MonoBehaviour
     void Start()
     {
         pfm = PathFinderManager.instance;
+		if (tacticalPathfinding)
+		{
+			pfm.tacticalPathfinding = true;
+			pfm.tacticalWeight = tacticalWeight;
+		}
 		wrld = WorldRepresentation.instance;
 		if (target != null)
 		{
@@ -146,6 +153,8 @@ public class PathFinder : MonoBehaviour
 
 		// Make the goal the arrive target, also add the offset because it is a child of the path finder
 		arrive.target.position = goalPosition;
+
+		DrawPaths(connections);
     }
 
 	private bool ReachedGoal()
@@ -172,5 +181,45 @@ public class PathFinder : MonoBehaviour
 		pathFollower.seeker = newSeeker;
 		
 		return nearTarget;
+	}
+
+	void DrawPaths(Connection[] connections)
+	{
+		if (tacticalPathfinding)
+		{
+			Connection[] OGconnections;
+			pfm.tacticalPathfinding = false;
+
+			// calculate original path and display it
+			if (precisePathFinding)
+			{
+				OGconnections = pfm.PathFindAStar(transform.position, goalPosition);
+			}
+			else
+			{
+				OGconnections = pfm.HierarchicalPathFindAStar(transform.position, goalPosition);
+			}
+
+			if (OGconnections == null || OGconnections.Length == 0) return;
+
+			// Draw the original path
+			foreach (Connection connection in OGconnections)
+			{
+				Debug.DrawLine(connection.fromNode.GetPosition(), connection.toNode.GetPosition(), Color.red);
+			}
+
+			// Draw the tactical path
+			foreach (Connection connection in connections)
+			{
+				Debug.DrawLine(connection.fromNode.GetPosition(), connection.toNode.GetPosition(), Color.green);
+			}
+
+			pfm.tacticalPathfinding = true;
+			pfm.tacticalWeight = tacticalWeight;		
+		}
+		else
+		{
+			pfm.tacticalPathfinding = false;
+		}
 	}
 }

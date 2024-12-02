@@ -45,3 +45,17 @@ public class ManhattanHeuristic : Heuristic
 		return Mathf.Abs(fromPosition.x - toPosition.x) + Mathf.Abs(fromPosition.y - toPosition.y);
 	}
 }
+
+public class TacticalManhattanHeuristic : ManhattanHeuristic
+{
+	private float weight;
+	public TacticalManhattanHeuristic(Node goalNode, float weight) : base(goalNode)
+	{
+		this.weight = weight;
+	}
+	protected override float Estimate(Node fromNode, Node toNode)
+	{
+		// Take into account the tacticalbenefit of the node
+		return base.Estimate(fromNode, toNode) - weight*fromNode.tacticalBenefit;
+	}
+}

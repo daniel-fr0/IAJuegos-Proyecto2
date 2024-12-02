@@ -4,6 +4,8 @@ using UnityEngine;
 public class PathFinderManager : MonoBehaviour
 {
 	public HierarchicalGraph hierarchicalGraph;
+	public bool tacticalPathfinding = false;
+	public float tacticalWeight = 1;
 
 	#region Singleton Initialization
 	public static PathFinderManager instance;
@@ -33,6 +35,11 @@ public class PathFinderManager : MonoBehaviour
 	{
 		NodeRecord current = null;
 		Heuristic heuristic = new ManhattanHeuristic(end);
+
+		if (tacticalPathfinding)
+		{
+			heuristic = new TacticalManhattanHeuristic(end, tacticalWeight);
+		}
 
 		// Initialize the record for the start node
 		NodeRecord startRecord = new NodeRecord(start, null, 0, heuristic.Estimate(start));

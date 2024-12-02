@@ -18,8 +18,8 @@ public class AllyAI : MonoBehaviour
     private Node safeZoneNode;
 
     // Transition parameters
-    public float enemyDetectionRadius = 5.0f;
-    public float allyDetectionRadius = 7.0f;
+    public float enemyDetectionRadius = 3.0f;
+    public float allyDetectionRadius = 4.0f;
     public bool debugInfo = false;
 
     void DefineTransitions()
@@ -121,8 +121,6 @@ public class AllyAI : MonoBehaviour
             DebugVisuals.DrawRadius(position, enemyDetectionRadius, Color.yellow);
             DebugVisuals.DrawRadius(position, allyDetectionRadius, Color.green);
         }
-
-        transform.position = stateMachine.stateKinematicData.position;
     }
 
     private bool NearPlayer()

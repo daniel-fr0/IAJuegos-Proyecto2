@@ -18,7 +18,7 @@ public class EnemyAI : MonoBehaviour
 	private Node safeZoneNode;
 
 	// Transition parameters
-	public float detectionRadius = 5.0f;
+	public float detectionRadius = 3.0f;
 	public float itemPickUpRadius = 1.0f;
 	public float patrolArriveRadius = 0.25f;
 	public bool debugInfo = false;
@@ -149,10 +149,8 @@ public class EnemyAI : MonoBehaviour
 		{
 			DebugVisuals.DrawRadius(stateMachine.stateKinematicData.position, detectionRadius, Color.yellow);
 		}
-
-		transform.position = stateMachine.stateKinematicData.position;
 	}
-	public bool PickedUpItem()
+	private bool PickedUpItem()
 	{
 		// If the item was picked up by someone else
 		if (item.activeSelf == false)

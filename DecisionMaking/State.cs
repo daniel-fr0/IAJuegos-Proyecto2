@@ -36,6 +36,7 @@ public class State : MonoBehaviour
 			kinematicData.velocity = newKinematicData.velocity;
 			kinematicData.orientation = newKinematicData.orientation;
 			kinematicData.rotation = newKinematicData.rotation;
+			kinematicData.debugInfo = newKinematicData.debugInfo;
 			
 			transform.position = newKinematicData.position;
 		}

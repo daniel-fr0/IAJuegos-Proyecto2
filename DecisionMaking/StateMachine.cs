@@ -27,9 +27,11 @@ public class StateMachineAI : MonoBehaviour
                 Debug.LogError("Assigning a null kinematic data to state kinematic data!");
         }
     }
+    private Kinematic character;
 
     void Start()
     {
+        character = GetComponent<Kinematic>();
         stateKinematicData = currentState.EnterState(null);
     }
 
@@ -47,6 +49,8 @@ public class StateMachineAI : MonoBehaviour
             Debug.LogError("Kinematic data is null!");
             return;
         }
+
+        character.CopyFrom(stateKinematicData);
 
         // Follow the first transition that is triggered
         foreach (Transition transition in currentState.transitions)

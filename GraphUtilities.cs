@@ -10,6 +10,8 @@ public class Node
 	public Vector3 center;
 	public Node representativeChild;
 	public Node parent;
+	// Tactical benefits/penalties if it is a tactical waypoint
+	public float tacticalBenefit = 0;
 
 	public Node(int level)
 	{
@@ -45,6 +47,21 @@ public class Node
 
 		return position.x >= leftBottom.x && position.x <= rightTop.x &&
 			position.y >= leftBottom.y && position.y <= rightTop.y;
+	}
+
+	public bool Contains(Vector3 position)
+	{
+		if (level == 0)
+		{
+			// A tile node has 1x1 bounds
+			Vector3 leftBottom = new Vector3(center.x - 0.5f, center.y - 0.5f, 0);
+			Vector3 rightTop = new Vector3(center.x + 0.5f, center.y + 0.5f, 0);
+
+			return position.x >= leftBottom.x && position.x <= rightTop.x &&
+				position.y >= leftBottom.y && position.y <= rightTop.y;
+		}
+
+		return Contains(new Node(position));
 	}
 
     public override bool Equals(object obj)

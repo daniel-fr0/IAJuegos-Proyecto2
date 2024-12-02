@@ -57,6 +57,7 @@ public class WorldRepresentationEditor : Editor
 public class WorldRepresentation : MonoBehaviour
 {
     public Tilemap tilemap;
+    public TacticalWaypoints tacticalWaypoints;
     private PathFinderManager pfm;
 
     // Walkable tile ids
@@ -129,101 +130,172 @@ public class WorldRepresentation : MonoBehaviour
             return;
         }
 
-        // Draw nodes
-        DrawNodes();
-
-        // Draw connections
-        DrawConnections();
-    }
-
-    private void DrawTileMapNodes()
-    {
-        foreach (Vector3 position in tilemap.cellBounds.allPositionsWithin)
+        if (worldConnections == null)
         {
-            if (IsWalkableTile(position))
-            {
-                Gizmos.DrawSphere(position + new Vector3(0.5f, 0.5f), 0.1f);
-            }
+            return;
         }
-    }
 
-    public void DrawNodes()
-    {
-        // If everything is disabled, don't draw anything
-        if (!drawBoundingBoxes && !drawSpheres) return;
-
+        // Draw graph
         int minLevel = Mathf.Max(0, minGizmosLevels);
-        int maxLevel = Mathf.Clamp(maxGizmosLevels, -1, transform.childCount);
+        int maxLevel = Mathf.Clamp(maxGizmosLevels, -1, worldConnections.Length-1);
 
-        // Draw the levels specified by the min and max levels
+        // Draw permited levels
         for (int level = minLevel; level <= maxLevel; level++)
         {
-            // Each level has a different color
-            Gizmos.color = colors[level % colors.Length];
-
-            if (level == 0)
-            {
-                if (tilemap != null && drawSpheres)
-                {
-                    // Draw tilemap nodes
-                    DrawTileMapNodes();
-                }
-                // Skip to the next iteration to avoid accessing transform.GetChild(-1)
-                continue;
-            }
-
-            // Skip if bounding boxes are disabled
-            if (!drawBoundingBoxes) break;
-
-            // At upper levels, draw the nodes from the RectTransforms
-            Transform levelTransform = transform.GetChild(level-1);
-            foreach (Transform nodeTransform in levelTransform)
-            {
-                RectTransform rectTransform = nodeTransform.GetComponent<RectTransform>();
-                if (rectTransform == null) continue;
-
-                // For the bounding box, we need the corners of the rect in world space
-                Vector3[] corners = new Vector3[4];
-                rectTransform.GetWorldCorners(corners);
-
-                Gizmos.DrawLine(corners[0], corners[1]);
-                Gizmos.DrawLine(corners[1], corners[2]);
-                Gizmos.DrawLine(corners[2], corners[3]);
-                Gizmos.DrawLine(corners[3], corners[0]);
-
-                if (drawSpheres)
-                {
-                    Gizmos.DrawSphere(corners[0], 0.1f);
-                    Gizmos.DrawSphere(corners[1], 0.1f);
-                    Gizmos.DrawSphere(corners[2], 0.1f);
-                    Gizmos.DrawSphere(corners[3], 0.1f);
-
-                    Gizmos.DrawSphere(rectTransform.position, 0.1f);
-                }
-            }
-        }
-    }
-
-    private void DrawConnections()
-    {
-        if (!drawConnections || !connectionsAvailable) return;
-
-        // Draw the saved connections
-        for (int level = 0; level < worldConnections.Length; level++)
-        {
-            if (level < minGizmosLevels || maxGizmosLevels < level) continue;
-
+            Color color = colors[level % colors.Length];
             WorldConnection[] connections = worldConnections[level].connections;
-            if (connections == null) continue;
 
-            Gizmos.color = colors[level % colors.Length];
             foreach (WorldConnection connection in connections)
             {
-                Gizmos.DrawLine(connection.from, connection.to);
+                // Draw the nodes at level 0
+                if (level == 0 && drawSpheres)
+                {
+                    if (connection.fromTacBenefit > 0)
+                    {
+                        Gizmos.color = Color.cyan;
+                    }
+                    else if (connection.fromTacBenefit < 0)
+                    {
+                        Gizmos.color = Color.red;
+                    }
+                    else
+                    {
+                        Gizmos.color = color;
+                    }
+                    Gizmos.DrawSphere(connection.from, 0.1f);
+                    if (connection.toTacBenefit > 0)
+                    {
+                        Gizmos.color = Color.cyan;
+                    }
+                    else if (connection.toTacBenefit < 0)
+                    {
+                        Gizmos.color = Color.red;
+                    }
+                    else
+                    {
+                        Gizmos.color = color;
+                    }
+                    Gizmos.DrawSphere(connection.to, 0.1f);
+                }
+                Gizmos.color = color;
+
+                // Draw the connections
+                if (drawConnections)
+                {
+                    // Draw the connections between the nodes
+                    Gizmos.DrawLine(connection.from, connection.to);
+                }
+                
+                // At higher levels, draw the bounding boxes
+                if (level != 0 && (drawBoundingBoxes || drawSpheres))
+                {
+                    // Draw the bounding box of each node at upper levels
+                    // Ensure that the bounds are in world space by adding the node's position
+                    Vector3 fromBottomLeft = new Vector3(connection.fromRectTransform.rect.xMin, connection.fromRectTransform.rect.yMin, 0) + connection.fromRectTransform.position;
+                    Vector3 fromTopLeft = new Vector3(connection.fromRectTransform.rect.xMin, connection.fromRectTransform.rect.yMax, 0) + connection.fromRectTransform.position;
+                    Vector3 fromTopRight = new Vector3(connection.fromRectTransform.rect.xMax, connection.fromRectTransform.rect.yMax, 0) + connection.fromRectTransform.position;
+                    Vector3 fromBottomRight = new Vector3(connection.fromRectTransform.rect.xMax, connection.fromRectTransform.rect.yMin, 0) + connection.fromRectTransform.position;
+
+                    Vector3 toBottomLeft = new Vector3(connection.toRectTransform.rect.xMin, connection.toRectTransform.rect.yMin, 0) + connection.toRectTransform.position;
+                    Vector3 toTopLeft = new Vector3(connection.toRectTransform.rect.xMin, connection.toRectTransform.rect.yMax, 0) + connection.toRectTransform.position;
+                    Vector3 toTopRight = new Vector3(connection.toRectTransform.rect.xMax, connection.toRectTransform.rect.yMax, 0) + connection.toRectTransform.position;
+                    Vector3 toBottomRight = new Vector3(connection.toRectTransform.rect.xMax, connection.toRectTransform.rect.yMin, 0) + connection.toRectTransform.position;
+
+                    if (drawBoundingBoxes)
+                    {
+                        // Side lines
+                        Gizmos.DrawLine(fromBottomLeft, fromTopLeft);
+                        Gizmos.DrawLine(fromTopLeft, fromTopRight);
+                        Gizmos.DrawLine(fromTopRight, fromBottomRight);
+                        Gizmos.DrawLine(fromBottomRight, fromBottomLeft);
+
+                        Gizmos.DrawLine(toBottomLeft, toTopLeft);
+                        Gizmos.DrawLine(toTopLeft, toTopRight);
+                        Gizmos.DrawLine(toTopRight, toBottomRight);
+                        Gizmos.DrawLine(toBottomRight, toBottomLeft);
+                    }
+
+                    if (drawSpheres)
+                    {
+                        // Draw the spheres at the corners of the bounding box
+                        Gizmos.DrawSphere(fromBottomLeft, 0.1f);
+                        Gizmos.DrawSphere(fromTopLeft, 0.1f);
+                        Gizmos.DrawSphere(fromTopRight, 0.1f);
+                        Gizmos.DrawSphere(fromBottomRight, 0.1f);
+
+                        Gizmos.DrawSphere(connection.fromRectTransform.position, 0.1f);
+
+                        Gizmos.DrawSphere(toBottomLeft, 0.1f);
+                        Gizmos.DrawSphere(toTopLeft, 0.1f);
+                        Gizmos.DrawSphere(toTopRight, 0.1f);
+                        Gizmos.DrawSphere(toBottomRight, 0.1f);
+
+                        Gizmos.DrawSphere(connection.toRectTransform.position, 0.1f);
+                    }
+                }
             }
         }
     }
 
+    public void DrawGraph()
+    {
+        int minLevel = Mathf.Max(0, minGizmosLevels);
+        int maxLevel = Mathf.Clamp(maxGizmosLevels, -1, pfm.hierarchicalGraph.Height()-1);
+
+        // Draw permited levels
+        for (int level = minLevel; level <= maxLevel; level++)
+        {
+            Color color = colors[level % colors.Length];
+            Graph graph = pfm.hierarchicalGraph.levels[level];
+
+            foreach (Node node in graph.GetNodes())
+            {
+                // Draw the connections
+                if (drawConnections)
+                {
+                    foreach (Connection connection in graph.GetConnections(node))
+                    {
+                        // Draw the connections between the nodes
+                        Debug.DrawLine(node.GetPosition(), connection.toNode.GetPosition(), color);
+                    }
+                }
+                
+                // At higher levels, draw the bounding boxes
+                if (level != 0 && drawBoundingBoxes)
+                {
+                    // Draw the bounding box of each node at upper levels
+                    // Ensure that the bounds are in world space by adding the node's position
+                    Vector3 bottomLeft = new Vector3(node.bounds.xMin, node.bounds.yMin, 0) + node.GetPosition();
+                    Vector3 topLeft = new Vector3(node.bounds.xMin, node.bounds.yMax, 0) + node.GetPosition();
+                    Vector3 topRight = new Vector3(node.bounds.xMax, node.bounds.yMax, 0) + node.GetPosition();
+                    Vector3 bottomRight = new Vector3(node.bounds.xMax, node.bounds.yMin, 0) + node.GetPosition();
+
+                    // Side lines
+                    Debug.DrawLine(bottomLeft, topLeft, color);
+                    Debug.DrawLine(topLeft, topRight, color);
+                    Debug.DrawLine(topRight, bottomRight, color);
+                    Debug.DrawLine(bottomRight, bottomLeft, color);
+                }
+            }
+        }
+    }
+    #endregion
+
+    void Start()
+    {
+        pfm = PathFinderManager.instance;
+        // Generate the hierarchical graph based on the children GameObjects
+        pfm.hierarchicalGraph = GenerateHierarchicalGraph();
+    }
+
+    void Update()
+    {
+        if (debugInfo)
+        {
+            DrawGraph();
+        }
+    }
+       
     public void CalculateConnections()
     {
         connectionsAvailable = true;
@@ -248,9 +320,44 @@ public class WorldRepresentation : MonoBehaviour
                     Vector3 neighbourPosition = position + direction;
                     if (IsWalkableTile(neighbourPosition))
                     {
-                        Vector3 from = position + new Vector3(0.5f, 0.5f);
-                        Vector3 to = neighbourPosition + new Vector3(0.5f, 0.5f);
-                        connectionList.Add(new WorldConnection { from = from, to = to });
+                        Node from = new Node(position);
+                        Node to = new Node(neighbourPosition);
+                        float fromTacBenefit = 0;
+                        float toTacBenefit = 0;
+
+                        if (tacticalWaypoints != null)
+                        {
+                            foreach (Vector3 pos in tacticalWaypoints.positiveWaypoints)
+                            {
+                                if (from.Contains(pos))
+                                {
+                                    fromTacBenefit += 1;
+                                }
+                                if (to.Contains(pos))
+                                {
+                                    toTacBenefit += 1;
+                                }
+                            }
+
+                            foreach (Vector3 pos in tacticalWaypoints.negativeWaypoints)
+                            {
+                                if (from.Contains(pos))
+                                {
+                                    fromTacBenefit -= 1;
+                                }
+                                if (to.Contains(pos))
+                                {
+                                    toTacBenefit -= 1;
+                                }
+                            }
+                        }
+
+                        connectionList.Add(new WorldConnection { 
+                            from = from.GetPosition(), 
+                            to = to.GetPosition(), 
+                            fromTacBenefit = fromTacBenefit,
+                            toTacBenefit = toTacBenefit
+                        });
                     }
                 }
             }
@@ -337,65 +444,6 @@ public class WorldRepresentation : MonoBehaviour
         }
     }
 
-    public void DrawGraph()
-    {
-        int minLevel = Mathf.Max(0, minGizmosLevels);
-        int maxLevel = Mathf.Clamp(maxGizmosLevels, -1, pfm.hierarchicalGraph.Height()-1);
-
-        // Draw permited levels
-        for (int level = minLevel; level <= maxLevel; level++)
-        {
-            Color color = colors[level % colors.Length];
-            Graph graph = pfm.hierarchicalGraph.levels[level];
-
-            foreach (Node node in graph.GetNodes())
-            {
-                // Draw the connections
-                if (drawConnections)
-                {
-                    foreach (Connection connection in graph.GetConnections(node))
-                    {
-                        // Draw the connections between the nodes
-                        Debug.DrawLine(node.GetPosition(), connection.toNode.GetPosition(), color);
-                    }
-                }
-                
-                // At higher levels, draw the bounding boxes
-                if (level != 0 && drawBoundingBoxes)
-                {
-                    // Draw the bounding box of each node at upper levels
-                    // Ensure that the bounds are in world space by adding the node's position
-                    Vector3 bottomLeft = new Vector3(node.bounds.xMin, node.bounds.yMin, 0) + node.GetPosition();
-                    Vector3 topLeft = new Vector3(node.bounds.xMin, node.bounds.yMax, 0) + node.GetPosition();
-                    Vector3 topRight = new Vector3(node.bounds.xMax, node.bounds.yMax, 0) + node.GetPosition();
-                    Vector3 bottomRight = new Vector3(node.bounds.xMax, node.bounds.yMin, 0) + node.GetPosition();
-
-                    // Side lines
-                    Debug.DrawLine(bottomLeft, topLeft, color);
-                    Debug.DrawLine(topLeft, topRight, color);
-                    Debug.DrawLine(topRight, bottomRight, color);
-                    Debug.DrawLine(bottomRight, bottomLeft, color);
-                }
-            }
-        }
-    }
-    #endregion
-
-    void Start()
-    {
-        pfm = PathFinderManager.instance;
-        // Generate the hierarchical graph based on the children GameObjects
-        pfm.hierarchicalGraph = GenerateHierarchicalGraph();
-    }
-
-    void Update()
-    {
-        if (debugInfo)
-        {
-            DrawGraph();
-        }
-    }
-
     private Graph GenerateTileGraph() 
     {
         Graph tileGraph = new Graph();
@@ -403,7 +451,9 @@ public class WorldRepresentation : MonoBehaviour
         foreach (WorldConnection connection in worldConnections[0].connections)
         {
             Node fromNode = new Node(connection.from);
+            fromNode.tacticalBenefit = connection.fromTacBenefit;
             Node toNode = new Node(connection.to);
+            toNode.tacticalBenefit = connection.toTacBenefit;
 
             tileGraph.AddConnection(fromNode, toNode);
         }

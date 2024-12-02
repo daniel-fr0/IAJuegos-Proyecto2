@@ -12,7 +12,8 @@ public class WorldConnection
 {
     public RectTransform fromRectTransform;
     public RectTransform toRectTransform;
-
 	public Vector3 from;
 	public Vector3 to;
+    public float fromTacBenefit;
+    public float toTacBenefit;
 }

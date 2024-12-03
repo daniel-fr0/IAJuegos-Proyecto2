@@ -35,13 +35,14 @@ public class PathFinder : MonoBehaviour
 	public bool precisePathFinding = false;
 	public bool tacticalPathfinding = false;
 	public float tacticalWeight = 1;
+	public bool debugInfo = false;
 
 	#region Input System
 	private InputSystem_Actions controls;
 	private void Awake()
 	{
 		controls = new InputSystem_Actions();
-		controls.DebugUI.ToggleMap.performed += ctx => path.debugInfo = !path.debugInfo;
+		controls.DebugUI.ToggleMap.performed += ctx => debugInfo = !debugInfo;
 	}
 	private void OnEnable()
 	{
@@ -185,6 +186,12 @@ public class PathFinder : MonoBehaviour
 
 	void DrawPaths(Connection[] connections)
 	{
+		path.debugInfo = debugInfo;
+		pfm.tacticalPathfinding = tacticalPathfinding;
+		pfm.tacticalWeight = tacticalWeight;		
+
+		if (!debugInfo) return;
+		
 		if (tacticalPathfinding)
 		{
 			Connection[] OGconnections;
@@ -208,18 +215,7 @@ public class PathFinder : MonoBehaviour
 				Debug.DrawLine(connection.fromNode.GetPosition(), connection.toNode.GetPosition(), Color.red);
 			}
 
-			// Draw the tactical path
-			foreach (Connection connection in connections)
-			{
-				Debug.DrawLine(connection.fromNode.GetPosition(), connection.toNode.GetPosition(), Color.green);
-			}
-
 			pfm.tacticalPathfinding = true;
-			pfm.tacticalWeight = tacticalWeight;		
-		}
-		else
-		{
-			pfm.tacticalPathfinding = false;
 		}
 	}
 }

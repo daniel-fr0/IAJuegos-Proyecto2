@@ -12,7 +12,7 @@ public class AllyAI : MonoBehaviour
 
     // World information
     public GameObject player;
-    public GameObject enemy;
+    public GameObject[] enemies;
     public RectTransform safeZoneRectangle;
     public int safeZoneLevel = 1;
     private Node safeZoneNode;
@@ -130,7 +130,14 @@ public class AllyAI : MonoBehaviour
 
     private bool NearEnemy()
     {
-        return Vector3.Distance(transform.position, enemy.transform.position) < enemyDetectionRadius;
+        foreach (GameObject enemy in enemies)
+        {
+            if (Vector3.Distance(transform.position, enemy.transform.position) < enemyDetectionRadius)
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     private bool InSafeZone()

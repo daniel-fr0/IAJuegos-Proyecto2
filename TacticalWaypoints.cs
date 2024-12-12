@@ -4,10 +4,29 @@ using UnityEngine;
 
 public class TacticalWaypoints : MonoBehaviour
 {
-    public GameObject positiveGroup;
-    public GameObject negativeGroup;
-    public Vector3[] positiveWaypoints;
-    public Vector3[] negativeWaypoints;
+    public Waypoint[] waypoints;
+
+    #if UNITY_EDITOR
+        void OnValidate()
+        {
+            UpdateWaypoints();
+        }
+    #endif
+
+    public void UpdateWaypoints()
+    {
+        TacticalWaypointsList[] tacticalWaypointsLists = GetComponentsInChildren<TacticalWaypointsList>();
+
+        List<Waypoint> wpList = new List<Waypoint>();
+
+        foreach (TacticalWaypointsList tacticalWaypointsList in tacticalWaypointsLists)
+        {
+            tacticalWaypointsList.UpdateWaypoints();
+            wpList.AddRange(tacticalWaypointsList.waypoints);
+        }
+
+        waypoints = wpList.ToArray();
+    }
 }
 
 
@@ -18,77 +37,29 @@ public class TacticalWaypointsEditor : Editor
     {
         base.OnInspectorGUI();
 
-        TacticalWaypoints tacticalWaypoints = (TacticalWaypoints)target;
-
-        if (GUILayout.Button("Calculate Waypoints"))
+        if (GUILayout.Button("Update Waypoints"))
         {
-            CalculateWaypoints(tacticalWaypoints);
-            Debug.Log("Waypoints calculated!");
-        }
-
-        if (GUILayout.Button("Clear Waypoints"))
-        {
-            tacticalWaypoints.positiveWaypoints = new Vector3[0];
-            tacticalWaypoints.negativeWaypoints = new Vector3[0];
-            Debug.Log("Waypoints cleared!");
+            TacticalWaypoints tacticalWaypoints = (TacticalWaypoints)target;
+            tacticalWaypoints.UpdateWaypoints();
+            Debug.Log("Waypoints updated!");
         }
 
         if (GUILayout.Button("Check Duplicates"))
         {
-            CheckDuplicates(tacticalWaypoints);
-        }
-    }
+            TacticalWaypoints tacticalWaypoints = (TacticalWaypoints)target;
+            Waypoint[] waypoints = tacticalWaypoints.waypoints;
 
-    private void CalculateWaypoints(TacticalWaypoints tacticalWaypoints)
-    {
-        List<Vector3> positiveWaypointsList = new List<Vector3>();
-        List<Vector3> negativeWaypointsList = new List<Vector3>();
+            HashSet<Vector3> positions = new HashSet<Vector3>();
 
-        foreach (Transform child in tacticalWaypoints.positiveGroup.transform)
-        {
-            positiveWaypointsList.Add(child.gameObject.transform.position);
-        }
-
-        foreach (Transform child in tacticalWaypoints.negativeGroup.transform)
-        {
-            negativeWaypointsList.Add(child.gameObject.transform.position);
-        }
-
-        tacticalWaypoints.positiveWaypoints = positiveWaypointsList.ToArray();
-        tacticalWaypoints.negativeWaypoints = negativeWaypointsList.ToArray();
-    }
-
-    private void CheckDuplicates(TacticalWaypoints tacticalWaypoints)
-    {
-        List<Vector3> positiveWaypointsList = new List<Vector3>();
-        List<Vector3> negativeWaypointsList = new List<Vector3>();
-
-        foreach (Vector3 waypoint in tacticalWaypoints.positiveWaypoints)
-        {
-            if (positiveWaypointsList.Contains(waypoint))
+            foreach (Waypoint waypoint in waypoints)
             {
-                Debug.LogError("Duplicate waypoint found: " + waypoint);
+                if (!positions.Add(waypoint.position))
+                {
+                    Debug.LogError("Duplicate waypoint at " + waypoint.position);
+                }
             }
-            else
-            {
-                positiveWaypointsList.Add(waypoint);
-            }
-        }
 
-        foreach (Vector3 waypoint in tacticalWaypoints.negativeWaypoints)
-        {
-            if (negativeWaypointsList.Contains(waypoint))
-            {
-                Debug.LogError("Duplicate waypoint found: " + waypoint);
-            }
-            else
-            {
-                negativeWaypointsList.Add(waypoint);
-            }
+            Debug.Log("Duplicates checked!");
         }
-
-        Debug.Log("Check complete!");
-        Debug.Log("Positive waypoints: " + positiveWaypointsList.Count);
-        Debug.Log("Negative waypoints: " + negativeWaypointsList.Count);
     }
 }

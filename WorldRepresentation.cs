@@ -327,27 +327,15 @@ public class WorldRepresentation : MonoBehaviour
 
                         if (tacticalWaypoints != null)
                         {
-                            foreach (Vector3 pos in tacticalWaypoints.positiveWaypoints)
+                            foreach (Waypoint waypoint in tacticalWaypoints.waypoints)
                             {
-                                if (from.Contains(pos))
+                                if (from.Contains(waypoint.position))
                                 {
-                                    fromTacBenefit += 1;
+                                    fromTacBenefit += waypoint.tacticalBenefit;
                                 }
-                                if (to.Contains(pos))
+                                if (to.Contains(waypoint.position))
                                 {
-                                    toTacBenefit += 1;
-                                }
-                            }
-
-                            foreach (Vector3 pos in tacticalWaypoints.negativeWaypoints)
-                            {
-                                if (from.Contains(pos))
-                                {
-                                    fromTacBenefit -= 1;
-                                }
-                                if (to.Contains(pos))
-                                {
-                                    toTacBenefit -= 1;
+                                    toTacBenefit += waypoint.tacticalBenefit;
                                 }
                             }
                         }

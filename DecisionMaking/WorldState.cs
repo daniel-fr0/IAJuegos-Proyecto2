@@ -2,6 +2,9 @@ using UnityEngine;
 
 public class WorldState : MonoBehaviour
 {
+	public RectTransform goal;
+	private Vector3 leftBottom;
+	private Vector3 rightTop;
 	public Sprite heartSprite;
 	public Sprite playerSprite;
 	public Sprite allySprite;
@@ -68,6 +71,9 @@ public class WorldState : MonoBehaviour
 		titleFont = new GUIStyle();
 		titleFont.fontSize = titleFontSize;
 		titleFont.normal.textColor = Color.white;
+
+		leftBottom = new Vector3(goal.rect.xMin, goal.rect.yMin, 0) + goal.transform.position;
+		rightTop = new Vector3(goal.rect.xMax, goal.rect.yMax, 0) + goal.transform.position;
 	}
 
 	public void SetInvulnerability(Kinematic character)
@@ -141,9 +147,17 @@ public class WorldState : MonoBehaviour
 			GUI.DrawTexture(new Rect(15 + i * 80, 200, 80, 80), heartSprite.texture);
 		}
 
+		// If player or ally has reached 0 health then game over
 		if (playerHealth <= 0 || allyHealth <= 0)
 		{
 			GameOver();
+		}
+
+		// If ally has reached the goal then win
+		if (ally.position.x >= leftBottom.x && ally.position.x <= rightTop.x &&
+			ally.position.y >= leftBottom.y && ally.position.y <= rightTop.y)
+		{
+			Win();
 		}
 	}
 
@@ -156,13 +170,21 @@ public class WorldState : MonoBehaviour
 		
 		if (playerHealth <= 0)
 		{
-			GUI.Label(new Rect(Screen.width / 2 - 120, Screen.height / 2 + 30, 200, 60), "¡El jugador ha muerto!", largeFont);
+			GUI.Label(new Rect(Screen.width / 2 - 120, Screen.height / 2 + 50, 200, 60), "¡El jugador ha muerto!", largeFont);
 			return;
 		}
 
 		if (allyHealth <= 0)
 		{
-			GUI.Label(new Rect(Screen.width / 2 - 150, Screen.height / 2 + 30, 200, 60), "¡El compañero ha muerto!", largeFont);
+			GUI.Label(new Rect(Screen.width / 2 - 150, Screen.height / 2 + 50, 200, 60), "¡El compañero ha muerto!", largeFont);
 		}
+	}
+
+	private void Win()
+	{
+		Time.timeScale = 0;
+		GUI.Box(new Rect(0, 0, Screen.width, Screen.height), "");
+		GUI.Label(new Rect(Screen.width / 2 - 200, Screen.height / 2 - 60, 400, 120), "¡Ganaste!", titleFont);
+		GUI.Label(new Rect(Screen.width / 2 - 220, Screen.height / 2 + 50, 200, 60), "¡El compañero ha llegado a la salida!", largeFont);
 	}
 }

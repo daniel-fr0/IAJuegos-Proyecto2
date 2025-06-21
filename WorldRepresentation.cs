@@ -1,58 +1,8 @@
 using UnityEngine;
-using UnityEditor;
 using UnityEngine.Tilemaps;
 using System.Linq;
 using System;
 using System.Collections.Generic;
-
-[CustomEditor(typeof(WorldRepresentation))]
-public class WorldRepresentationEditor : Editor
-{
-    public override void OnInspectorGUI()
-    {
-        DrawDefaultInspector();
-
-        WorldRepresentation wrld = (WorldRepresentation)target;
-        if (GUILayout.Button("Calculate Connections"))
-        {
-            wrld.CalculateConnections();
-            EditorUtility.SetDirty(wrld);
-            Debug.Log("Connections calculated!");
-        }
-
-        if (GUILayout.Button("Clear Connections"))
-        {
-            wrld.connectionsAvailable = false;
-            wrld.worldConnections = null;
-            EditorUtility.SetDirty(wrld);
-            Debug.Log("Connections cleared!");
-        }
-
-        if (GUILayout.Button("Check for duplicates"))
-        {
-            foreach (Transform levelTransform in wrld.transform)
-            {
-                for (int i = 0; i < levelTransform.childCount; i++)
-                {
-                    Transform nodeTransform = levelTransform.GetChild(i);
-
-                    for (int j = i+1; j < levelTransform.childCount; j++)
-                    {
-                        Transform otherTransform = levelTransform.GetChild(j);
-
-                        if (nodeTransform.position.Equals(otherTransform.position))
-                        {
-                            Debug.LogWarning("Overlapping nodes found!");
-                            Debug.LogWarning("Node 1: " + nodeTransform.name);
-                            Debug.LogWarning("Node 2: " + otherTransform.name);
-                        }
-                    }
-                }
-            }
-            Debug.Log("Duplicates checked!");
-        }
-    }
-}
 
 public class WorldRepresentation : MonoBehaviour
 {

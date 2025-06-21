@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using UnityEditor;
 using UnityEngine;
 
 public class TacticalWaypoints : MonoBehaviour
@@ -26,40 +25,5 @@ public class TacticalWaypoints : MonoBehaviour
         }
 
         waypoints = wpList.ToArray();
-    }
-}
-
-
-[CustomEditor(typeof(TacticalWaypoints))]
-public class TacticalWaypointsEditor : Editor
-{
-    public override void OnInspectorGUI()
-    {
-        base.OnInspectorGUI();
-
-        if (GUILayout.Button("Update Waypoints"))
-        {
-            TacticalWaypoints tacticalWaypoints = (TacticalWaypoints)target;
-            tacticalWaypoints.UpdateWaypoints();
-            Debug.Log("Waypoints updated!");
-        }
-
-        if (GUILayout.Button("Check Duplicates"))
-        {
-            TacticalWaypoints tacticalWaypoints = (TacticalWaypoints)target;
-            Waypoint[] waypoints = tacticalWaypoints.waypoints;
-
-            HashSet<Vector3> positions = new HashSet<Vector3>();
-
-            foreach (Waypoint waypoint in waypoints)
-            {
-                if (!positions.Add(waypoint.position))
-                {
-                    Debug.LogError("Duplicate waypoint at " + waypoint.position);
-                }
-            }
-
-            Debug.Log("Duplicates checked!");
-        }
     }
 }

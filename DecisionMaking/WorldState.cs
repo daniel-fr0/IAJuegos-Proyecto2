@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class WorldState : MonoBehaviour
 {
@@ -41,6 +42,7 @@ public class WorldState : MonoBehaviour
 	public int titleFontSize = 100;
 	private GUIStyle largeFont;
 	private GUIStyle titleFont;
+	private GUIStyle buttonStyle;
 
 	#region Singleton
 	public static WorldState instance;
@@ -56,6 +58,10 @@ public class WorldState : MonoBehaviour
 		}
 	}
 	#endregion
+
+	// Add game state variables
+	private bool gameEnded = false;
+	private bool playerWon = false;
 
 	private void Start()
 	{
@@ -134,57 +140,136 @@ public class WorldState : MonoBehaviour
 
 	private void OnGUI()
 	{
-		// Draw sprites
-		GUI.DrawTexture(new Rect(15, 100, 80, 80), playerSprite.texture);
-		GUI.DrawTexture(new Rect(15, 200, 80, 80), allySprite.texture);
-		// Draw hearts
-		for (int i = 1; i <= playerHealth; i++)
+		// Initialize button style here if it hasn't been created yet
+		if (buttonStyle == null)
 		{
-			GUI.DrawTexture(new Rect(15 + i * 80, 100, 80, 80), heartSprite.texture);
-		}
-		for (int i = 1; i <= allyHealth; i++)
-		{
-			GUI.DrawTexture(new Rect(15 + i * 80, 200, 80, 80), heartSprite.texture);
+			buttonStyle = new GUIStyle(GUI.skin.button);
+			buttonStyle.fontSize = largeFontSize;
+			buttonStyle.normal.textColor = Color.black; // Changed to black for better visibility
+			buttonStyle.hover.textColor = Color.gray;
 		}
 
-		// If player or ally has reached 0 health then game over
-		if (playerHealth <= 0 || allyHealth <= 0)
+		// Draw sprites and hearts only if game hasn't ended
+		if (!gameEnded)
 		{
-			GameOver();
+			// Draw sprites
+			GUI.DrawTexture(new Rect(15, 100, 80, 80), playerSprite.texture);
+			GUI.DrawTexture(new Rect(15, 200, 80, 80), allySprite.texture);
+			
+			// Draw hearts
+			for (int i = 1; i <= playerHealth; i++)
+			{
+				GUI.DrawTexture(new Rect(15 + i * 80, 100, 80, 80), heartSprite.texture);
+			}
+			for (int i = 1; i <= allyHealth; i++)
+			{
+				GUI.DrawTexture(new Rect(15 + i * 80, 200, 80, 80), heartSprite.texture);
+			}
+
+			// Check win/lose conditions
+			if (playerHealth <= 0 || allyHealth <= 0)
+			{
+				gameEnded = true;
+				playerWon = false;
+				Time.timeScale = 0;
+			}
+			else if (ally.position.x >= leftBottom.x && ally.position.x <= rightTop.x &&
+					 ally.position.y >= leftBottom.y && ally.position.y <= rightTop.y)
+			{
+				gameEnded = true;
+				playerWon = true;
+				Time.timeScale = 0;
+			}
 		}
 
-		// If ally has reached the goal then win
-		if (ally.position.x >= leftBottom.x && ally.position.x <= rightTop.x &&
-			ally.position.y >= leftBottom.y && ally.position.y <= rightTop.y)
+		// Show game over or win screen
+		if (gameEnded)
 		{
-			Win();
+			if (playerWon)
+			{
+				Win();
+			}
+			else
+			{
+				GameOver();
+			}
 		}
 	}
 
 	private void GameOver()
 	{
-		Time.timeScale = 0;
-		GUI.Box(new Rect(0, 0, Screen.width, Screen.height), "");
+		// Semi-transparent black background
+		GUI.color = new Color(0, 0, 0, 0.8f);
+		GUI.DrawTexture(new Rect(0, 0, Screen.width, Screen.height), Texture2D.whiteTexture);
+		GUI.color = Color.white;
 		
+		// Game over text
 		GUI.Label(new Rect(Screen.width / 2 - 200, Screen.height / 2 - 60, 400, 120), "¡Perdiste!", titleFont);
 		
 		if (playerHealth <= 0)
 		{
-			GUI.Label(new Rect(Screen.width / 2 - 120, Screen.height / 2 + 50, 200, 60), "¡El jugador ha muerto!", largeFont);
-			return;
+			GUI.Label(new Rect(Screen.width / 2 - 120, Screen.height / 2 + 50, 240, 60), "¡El jugador ha muerto!", largeFont);
+		}
+		else if (allyHealth <= 0)
+		{
+			GUI.Label(new Rect(Screen.width / 2 - 150, Screen.height / 2 + 50, 300, 60), "¡El compañero ha muerto!", largeFont);
 		}
 
-		if (allyHealth <= 0)
+		// Restart button
+		if (GUI.Button(new Rect(Screen.width / 2 - 100, Screen.height / 2 + 120, 200, 50), "Reiniciar", buttonStyle))
 		{
-			GUI.Label(new Rect(Screen.width / 2 - 150, Screen.height / 2 + 50, 200, 60), "¡El compañero ha muerto!", largeFont);
+			RestartGame();
+		}
+
+		// Quit button
+		if (GUI.Button(new Rect(Screen.width / 2 - 100, Screen.height / 2 + 180, 200, 50), "Salir", buttonStyle))
+		{
+			QuitGame();
 		}
 	}
 
 	private void Win()
 	{
-		Time.timeScale = 0;
-		GUI.Box(new Rect(0, 0, Screen.width, Screen.height), "");
+		// Semi-transparent black background
+		GUI.color = new Color(0, 0, 0, 0.8f);
+		GUI.DrawTexture(new Rect(0, 0, Screen.width, Screen.height), Texture2D.whiteTexture);
+		GUI.color = Color.white;
+		
+		// Win text
 		GUI.Label(new Rect(Screen.width / 2 - 200, Screen.height / 2 - 60, 400, 120), "¡Ganaste!", titleFont);
-		GUI.Label(new Rect(Screen.width / 2 - 220, Screen.height / 2 + 50, 200, 60), "¡El compañero ha llegado a la salida!", largeFont);
+		GUI.Label(new Rect(Screen.width / 2 - 220, Screen.height / 2 + 50, 440, 60), "¡El compañero ha llegado a la salida!", largeFont);
+
+		// Restart button
+		if (GUI.Button(new Rect(Screen.width / 2 - 150, Screen.height / 2 + 120, 300, 50), "Jugar de nuevo", buttonStyle))
+		{
+			RestartGame();
+		}
+
+		// Quit button
+		if (GUI.Button(new Rect(Screen.width / 2 - 100, Screen.height / 2 + 180, 200, 50), "Salir", buttonStyle))
+		{
+			QuitGame();
+		}
+	}
+
+	private void RestartGame()
+	{
+		// Reset time scale to normal
+		Time.timeScale = 1;
+		
+		// Reload the current scene
+		SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+	}
+
+	private void QuitGame()
+	{
+		// Reset time scale to normal
+		Time.timeScale = 1;
+		
+		#if UNITY_EDITOR
+			UnityEditor.EditorApplication.isPlaying = false;
+		#else
+			Application.Quit();
+		#endif
 	}
 }
